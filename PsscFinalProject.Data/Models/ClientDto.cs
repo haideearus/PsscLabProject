@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace PsscFinalProject.Data.Models;
 
 public partial class ClientDto
 {
+    [Key]
     public int ClientId { get; set; }
 
     public string FirstName { get; set; } = null!;

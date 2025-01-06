@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace PsscFinalProject.Data.Models;
 
 public partial class OrderDto
 {
+    [Key]
     public int OrderId { get; set; }
 
     public int ClientId { get; set; }

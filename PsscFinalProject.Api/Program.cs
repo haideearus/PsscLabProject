@@ -13,37 +13,40 @@ namespace PsscFinalProject.Api
     {
         public static void Main(string[] args)
         {
-            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddDbContext<PsscDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddDbContext<PsscDbContext>
-                (options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            // Register repositories (uncomment and adjust as needed)
+            // builder.Services.AddTransient<IGradesRepository, GradesRepository>();
+            // builder.Services.AddTransient<IStudentsRepository, StudentsRepository>();
+            // builder.Services.AddTransient<PublishExamWorkflow>();
 
-            //builder.Services.AddTransient<IGradesRepository, GradesRepository>();
-            //builder.Services.AddTransient<IStudentsRepository, StudentsRepository>();
-            //builder.Services.AddTransient<PublishExamWorkflow>();
-            //must put teh right repositories pls
+            // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();
 
+            // Add Azure Service Bus client
             builder.Services.AddAzureClients(client =>
             {
                 client.AddServiceBusClient(builder.Configuration.GetConnectionString("ServiceBus"));
             });
 
+            // Add HTTP client
             builder.Services.AddHttpClient();
 
+            // Add controllers
             builder.Services.AddControllers();
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            // Add Swagger (OpenAPI)
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PsscFinalProject.Api", Version = "v1" });
             });
 
-
-            WebApplication app = builder.Build();
+            var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -56,7 +59,7 @@ namespace PsscFinalProject.Api
 
             app.UseAuthorization();
 
-
+            // Map controllers
             app.MapControllers();
 
             app.Run();
