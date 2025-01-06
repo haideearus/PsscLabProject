@@ -5,6 +5,7 @@ using PsscFinalProject.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.OpenApi.Models;
+using PsscFinalProject.Data.Models;
 
 namespace PsscFinalProject.Api
 {
