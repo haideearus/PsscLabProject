@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	  <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	  <OutputType>Library</OutputType>
   </PropertyGroup>
 
 	<ItemGroup>
@@ -12,12 +13,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CloudNative.CloudEvents" Version="2.8.0" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.1.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\PsscFinalProject.Dto\PsscFinalProject.Dto.csproj" />
 		<ProjectReference Include="..\PsscFinalProject.Events.ServiceBus\PsscFinalProject.Events.ServiceBus.csproj" />
 	</ItemGroup>
 </Project>

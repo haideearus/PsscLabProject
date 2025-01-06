@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using CloudNative.CloudEvents;
-using Example.Events.Models;
+using PsscFinalProject.Events.Models;
 
 namespace PsscFinalProject.Events
 {

@@ -8,14 +8,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.1" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.9.0" />
+		<PackageReference Include="Microsoft.OpenApi" Version="1.6.23" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\PsscFinalProject.Data\PsscFinalProject.Data.csproj" />
-		<ProjectReference Include="..\PsscFinalProject.Dto\PsscFinalProject.Dto.csproj" />
-		<ProjectReference Include="..\PsscFinalProject.Events.ServiceBus\PsscFinalProject.Events.ServiceBus.csproj" />
 		<ProjectReference Include="..\PsscFinalProject.Domain\PsscFinalProject.Domain.csproj" />
 	</ItemGroup>
 

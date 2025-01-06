@@ -1,9 +1,7 @@
 ﻿using PsscFinalProject.Data;
-using PsscFinalProject.Data.Repositories;
 using PsscFinalProject.Events;
 using PsscFinalProject.Events.ServiceBus;
-using PsscFinalProject.Domain.Repositories;
-using PsscFinalProject.Domain.Workflows;
+using PsscFinalProject.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.OpenApi.Models;
@@ -18,7 +16,7 @@ namespace PsscFinalProject.Api
 
             // Add services to the container.
 
-            builder.Services.AddDbContext<GradesContext>
+            builder.Services.AddDbContext<PsscDbContext>
                 (options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             //builder.Services.AddTransient<IGradesRepository, GradesRepository>();
