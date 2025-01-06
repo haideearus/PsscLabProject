@@ -1,4 +1,5 @@
-using PsscFinalProject.Data;
+
+using PsscFinalProject.Data.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
