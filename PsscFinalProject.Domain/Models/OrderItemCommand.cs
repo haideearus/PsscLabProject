@@ -6,19 +6,15 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public class OrderItem
+     public record OrderItemCommand
     {
-       
-        public int ProductId { get; set; }
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
-        public OrderItem(int productId, int quantity, decimal price)
+        public OrderItemCommand(int productId, int quantity)
         {
             ProductId = productId;
             Quantity = quantity;
-            Price = price;
         }
 
-
+        public int ProductId { get; }
+        public int Quantity { get; }
     }
 }

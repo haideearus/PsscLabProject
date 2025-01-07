@@ -14,12 +14,13 @@ namespace PsscFinalProject.Data.Repositories
         {
             this.dbContext = dbContext;
         }
+   
 
         public async Task<List<ClientDto>> GetClientsAsync()
         {
             return await dbContext.Clients.AsNoTracking().ToListAsync();
         }
-
+     
         public async Task SaveClientsAsync(IEnumerable<ClientDto> clients)
         {
             dbContext.Clients.AddRange(clients.Where(c => c.ClientId == 0));

@@ -25,5 +25,17 @@ namespace PsscFinalProject.Domain.Operations
                 Order = new Order(client, orderDto.OrderDate, paymentMethod, orderDto.TotalAmount, orderDto.ShippingAddress)
             };
         }
+        public static Product MapProductDtoToProduct(ProductDto productDto)
+        {
+            return new Product
+            {
+                ProductId = productDto.ProductId,
+                Name = productDto.Name,
+                Code = productDto.Code,
+                Price = productDto.Price,
+                QuantityType = productDto.QuantityType,
+                Stock = productDto.Stock
+            };
+        }
     }
 }

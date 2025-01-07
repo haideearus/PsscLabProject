@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsscFinalProject.Events", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsscFinalProject.Events.ServiceBus", "PsscFinalProject.Events.ServiceBus\PsscFinalProject.Events.ServiceBus.csproj", "{2CA5788B-FE6A-49B5-B760-32BEC0240397}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsscFinalProject.Tests", "PsscFinalProject.Tests\PsscFinalProject.Tests.csproj", "{C21F0CF4-56BE-4EDD-96F2-7C327834253C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{2CA5788B-FE6A-49B5-B760-32BEC0240397}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CA5788B-FE6A-49B5-B760-32BEC0240397}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CA5788B-FE6A-49B5-B760-32BEC0240397}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C21F0CF4-56BE-4EDD-96F2-7C327834253C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C21F0CF4-56BE-4EDD-96F2-7C327834253C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C21F0CF4-56BE-4EDD-96F2-7C327834253C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C21F0CF4-56BE-4EDD-96F2-7C327834253C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

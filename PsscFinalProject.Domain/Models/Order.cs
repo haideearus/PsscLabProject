@@ -47,6 +47,7 @@ namespace PsscFinalProject.Domain.Models
             OrderItems = new List<OrderItem>();
         }
 
+
         // Method to change the state of the order
         public void SetOrderState(OrderState state)
         {
@@ -86,18 +87,15 @@ namespace PsscFinalProject.Domain.Models
     public enum PaymentMethod
     {
         CreditCard,
-        PayPal,
-        CashOnDelivery,
-        BankTransfer
+        CashOnDelivery
     }
 
     // Enum for Order State
     public enum OrderState
     {
-        Pending,
-        Shipped,
-        Delivered,
-        Cancelled
+        Placed,
+        Billed,
+        Delivered
     }
 
     
