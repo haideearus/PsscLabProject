@@ -15,5 +15,6 @@ namespace PsscFinalProject.Domain.Repositories
 
         Task SaveOrdersAsync(IEnumerable<OrderDto> orders);
         Task SaveAsync(Order order);
+        Task SaveOrderAsync(Order order);
     }
 }

@@ -14,7 +14,14 @@ namespace PsscFinalProject.Data.Repositories
         {
             this.dbContext = dbContext;
         }
-   
+
+        public async Task<ClientDto> GetClientByIdAsync(int clientId)
+        {
+            return await dbContext.Clients
+                .AsNoTracking()
+                .FirstOrDefaultAsync(client => client.ClientId == clientId);
+        }
+
 
         public async Task<List<ClientDto>> GetClientsAsync()
         {

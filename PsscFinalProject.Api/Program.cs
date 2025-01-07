@@ -7,6 +7,8 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PsscFinalProject.Data.Models;
+using PsscFinalProject.Data.Repositories;
+using PsscFinalProject.Domain.Repositories;
 
 namespace PsscFinalProject.Api
 {
@@ -18,12 +20,12 @@ namespace PsscFinalProject.Api
 
             // Add services to the container.
             builder.Services.AddDbContext<PsscDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Register repositories (uncomment and adjust as needed)
-            // builder.Services.AddTransient<IGradesRepository, GradesRepository>();
-            // builder.Services.AddTransient<IStudentsRepository, StudentsRepository>();
-            // builder.Services.AddTransient<PublishExamWorkflow>();
+           // builder.Services.AddTransient<IShoppingCartRepository, ShoppingCartRepository>();
+          //  builder.Services.AddTransient<IOrderRepository, OrderRepository>();
+            builder.Services.AddTransient<ClientRepository>();
+            builder.Services.AddTransient<TakeOrderWorkflow>();
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();

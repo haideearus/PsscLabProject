@@ -1,5 +1,6 @@
 ﻿using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Models.PsscFinalProject.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +36,22 @@ namespace PsscFinalProject.Domain.Operations
                 Price = productDto.Price,
                 QuantityType = productDto.QuantityType,
                 Stock = productDto.Stock
+            };
+        }
+        public static Client MapToDomain(ClientDto clientDto)
+        {
+            if (clientDto == null)
+                throw new ArgumentNullException(nameof(clientDto));
+
+            return new Client(
+                clientDto.ClientId,
+                clientDto.Email
+            )
+            {
+                FirstName = clientDto.FirstName,
+                LastName = clientDto.LastName,
+                PhoneNumber = clientDto.PhoneNumber,
+                UserId = clientDto.UserId
             };
         }
     }

@@ -11,6 +11,7 @@ namespace PsscFinalProject.Domain.Repositories
     {
         Task<ShoppingCart> GetAsync(int cartId);
         Task<ShoppingCart> GetByUserIdAsync(int userId);
+        Task<ShoppingCart> GetCartByClientIdAsync(int clientId);
         Task SaveAsync(ShoppingCart cart);
     }
 

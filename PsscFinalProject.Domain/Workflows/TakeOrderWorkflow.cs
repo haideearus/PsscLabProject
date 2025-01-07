@@ -1,122 +1,86 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.Extensions.Logging;
-//using PsscFinalProject.Accomodation.EventProcessor;
-//using PsscFinalProject.Domain.Models;
-//using PsscFinalProject.Domain.Repositories;
+﻿using Microsoft.Extensions.Logging;
+using PsscFinalProject.Data.Repositories;
+using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-//namespace PsscFinalProject.Domain.Workflows
-//{
-//    public class TakeOrderWorkflow
-//    {
-//        private readonly IShoppingCartRepository shoppingCartRepository;
-//        private readonly IInventoryRepository inventoryRepository;
-//        private readonly IOrderRepository orderRepository;
-//        private readonly ILogger<TakeOrderWorkflow> logger;
+public class TakeOrderWorkflow
+{
+    private readonly IShoppingCartRepository shoppingCartRepository;
+    private readonly IOrderRepository orderRepository;
+    private readonly ClientRepository clientRepository;
+    private readonly ILogger<TakeOrderWorkflow> logger;
 
-//        public TakeOrderWorkflow(
-//            IShoppingCartRepository shoppingCartRepository,
-//            IInventoryRepository inventoryRepository,
-//            IOrderRepository orderRepository,
-//            ILogger<TakeOrderWorkflow> logger)
-//        {
-//            this.shoppingCartRepository = shoppingCartRepository;
-//            this.inventoryRepository = inventoryRepository;
-//            this.orderRepository = orderRepository;
-//            this.logger = logger;
-//        }
+    public TakeOrderWorkflow(
+        IShoppingCartRepository shoppingCartRepository,
+        IOrderRepository orderRepository,
+        ClientRepository clientRepository,
+        ILogger<TakeOrderWorkflow> logger)
+    {
+        this.shoppingCartRepository = shoppingCartRepository;
+        this.orderRepository = orderRepository;
+        this.clientRepository = clientRepository; // Injected properly
+        this.logger = logger;
+    }
 
-//        // Metoda principală care va executa fluxul de lucru pentru preluarea unei comenzi
-//        public async Task<IOrderProcessedEvent> ExecuteAsync(TakeOrderCommand command)
-//        {
-//            try
-//            {
-//                // 1. Crearea unui coș de cumpărături
-//                var shoppingCart = CreateShoppingCart(command);
-//                await shoppingCartRepository.SaveAsync(shoppingCart);
+    // Main method to execute the workflow for taking an order
+    public async Task<IOrderProcessedEvent> ExecuteAsync(TakeOrderCommand command)
+    {
+        try
+        {
+            // 1. Retrieve or create a shopping cart for the client
+            var shoppingCart = await RetrieveOrCreateShoppingCartAsync(command.ClientId, command.ClientEmail);
 
-//                // 2. Validarea coșului
-//                var isValid = ValidateShoppingCart(shoppingCart);
-//                if (!isValid)
-//                {
-//                    return new OrderProcessingFailedEvent("Coșul de cumpărături nu este valid.");
-//                }
+            // 2. Add products to the cart, transitioning it to an Unvalidated state
+            shoppingCart = shoppingCart.AddProduct(command.ProductIds);
 
-//                // 3. Plătirea coșului
-//                var paymentResult = ProcessPayment(shoppingCart);
-//                if (!paymentResult)
-//                {
-//                    return new OrderProcessingFailedEvent("Plata nu a fost procesată cu succes.");
-//                }
+            // 3. Compute total, transitioning the cart to a Validated state
+            decimal totalAmount = await ComputeTotalAmountAsync(command.ProductIds); // Simulate total price calculation
+            shoppingCart = shoppingCart.ComputeTotal(totalAmount);
 
-//                // 4. Crearea comenzii
-//                var order = CreateOrderFromCart(shoppingCart);
-//                await orderRepository.SaveAsync(order);
+            // 4. Pay the cart, transitioning it to the Paid state
+            shoppingCart = shoppingCart.Pay();
 
-//                // 5. Generarea unui eveniment de procesare a comenzii
-//                return new OrderProcessedEvent(order.OrderId, "Comanda a fost procesată cu succes.");
-//            }
-//            catch (Exception ex)
-//            {
-//                logger.LogError(ex, "A apărut o eroare la preluarea comenzii");
-//                return new OrderProcessingFailedEvent("Eroare neașteptată.");
-//            }
-//        }
+            // 5. Create an order from the paid cart
+            var order = await shoppingCart.PlaceOrderAsync(command.ShippingAddress);
 
-//        // Funcția pentru crearea unui coș de cumpărături
-//        private ShoppingCart CreateShoppingCart(TakeOrderCommand command)
-//        {
-//            var cart = new ShoppingCart();
-//            foreach (var item in command.OrderItems)
-//            {
-//                cart.AddItem(item.ProductId, item.Quantity);
-//            }
-//            return cart;
-//        }
+            // 6. Save the order to the database
+            await orderRepository.SaveOrderAsync(order);
 
-//        // Funcția pentru validarea coșului de cumpărături
-//        private bool ValidateShoppingCart(ShoppingCart cart)
-//        {
-//            foreach (var item in cart.Items)
-//            {
-//                var product = inventoryRepository.GetProduct(item.ProductId);
-//                if (product == null || product.Stock < item.Quantity)
-//                {
-//                    logger.LogError($"Produsul {item.ProductId} nu este disponibil în cantitatea solicitată.");
-//                    return false;
-//                }
-//            }
-//            return true;
-//        }
+            // 7. Save the final cart state to the repository
+            await shoppingCartRepository.SaveAsync(shoppingCart);
 
-//        // Funcția pentru procesarea plății
-//        private bool ProcessPayment(ShoppingCart cart)
-//        {
-//            // Simulăm procesarea plății. Într-o aplicație reală, ar trebui să se conecteze la un serviciu de plată.
-//            var totalAmount = cart.TotalAmount = cart.CalculateTotalPrice();
-//            bool isPaid = true; // Presupunem că plata este întotdeauna reușită pentru exemplu.
-//            if (!isPaid)
-//            {
-//                logger.LogError("Plata nu a fost procesată.");
-//                return false;
-//            }
+            // 8. Return success event
+            logger.LogInformation($"Order placed successfully for Client ID {shoppingCart.ClientId}.");
+            return new OrderProcessedEvent(order.OrderId, "Order has been successfully processed.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while processing the order.");
+            return new OrderProcessingFailedEvent("An unexpected error occurred.");
+        }
+    }
 
-//            cart.MarkAsPaid(); // Marcați coșul ca plătit
-//            return true;
-//        }
+    // Helper method to retrieve or create a shopping cart
+    private async Task<ShoppingCart> RetrieveOrCreateShoppingCartAsync(int clientId, string clientEmail)
+    {
+        var shoppingCart = await shoppingCartRepository.GetCartByClientIdAsync(clientId);
+        if (shoppingCart == null)
+        {
+            // Create a new cart if one doesn't exist
+            shoppingCart = new ShoppingCart(clientId, clientEmail, clientRepository);
+            logger.LogInformation($"New shopping cart created for Client ID {clientId}.");
+        }
+        return shoppingCart;
+    }
 
-//        // Funcția pentru crearea unei comenzi pe baza coșului de cumpărături
-//        private Order CreateOrderFromCart(ShoppingCart cart)
-//        {
-//            return new Order
-//            {
-//                OrderId = Guid.NewGuid().ToString(),
-//                Items = cart.Items.Select(item => new OrderItem(item.ProductId, item.Quantity)).ToList(),
-//                TotalAmount = cart.CalculateTotalPrice(),
-//                Status = OrderStatus.Paid
-//            };
-//        }
-//    }
-//}
+    // Simulate total price calculation (replace with actual implementation)
+    private Task<decimal> ComputeTotalAmountAsync(List<string> productIds)
+    {
+        // Here you could fetch product prices and calculate the total amount
+        decimal totalAmount = productIds.Count * 10.00m; // Example: each product costs $10
+        return Task.FromResult(totalAmount);
+    }
+}
