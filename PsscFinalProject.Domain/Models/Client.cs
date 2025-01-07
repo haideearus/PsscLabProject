@@ -29,5 +29,11 @@ namespace PsscFinalProject.Domain.Models
 
         // Navigation property for Orders related to this Client
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        public Client(int clientId, string email)
+        {
+            ClientId = clientId;
+            Email = email;
+        }
     }
 }
