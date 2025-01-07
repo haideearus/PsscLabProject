@@ -26,43 +26,39 @@ public class ClientController : ControllerBase
         return Ok(clients);
     }
 
-    //// POST: api/clients
-    //[HttpPost]
-    //public async Task<IActionResult> AddClient([FromBody] ClientDto newClientDto)
-    //{
-    //    if (newClientDto == null)
-    //    {
-    //        return BadRequest("Client data cannot be null.");
-    //    }
-
-    //    try
-    //    {
-    //        // Add the new client to the database
-    //        await _context.Clients.AddAsync(newClientDto);
-    //        await _context.SaveChangesAsync();
-
-    //        return CreatedAtAction(nameof(GetClientById), new { id = newClientDto.ClientId }, newClientDto);
-    //    }
-    //    catch (DbUpdateException ex)
-    //    {
-    //        return StatusCode(500, $"Internal server error: {ex.Message}");
-    //    }
-    //}
-
     [HttpPost]
-    public async Task<IActionResult> AddClient(ClientDto clientDto)
+    public async Task<IActionResult> AddClient([FromBody] ClientDto clientDto)
     {
-        var user = await _context.Users.FindAsync(clientDto.UserId);
-        if (user == null)
+        // Validate input
+        if (string.IsNullOrEmpty(clientDto.Email))
         {
-            return BadRequest("UserId does not correspond to an existing user.");
+            return BadRequest("Email is required to associate the client with a user.");
         }
 
-        clientDto.User = user; // Associate the existing user with the client
-        _context.Clients.Add(clientDto);
+        // Find the user by email
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == clientDto.Email);
+        if (user == null)
+        {
+            return BadRequest("No user found with the provided email address.");
+        }
+
+        // Associate the client with the found user
+        var newClient = new ClientDto
+        {
+            FirstName = clientDto.FirstName,
+            LastName = clientDto.LastName,
+            Email = clientDto.Email,
+            PhoneNumber = clientDto.PhoneNumber,
+            UserId = user.UserId, // Associate the client with the user's ID
+            User = user // Optional: Set the navigation property
+        };
+
+        // Add the client to the database
+        _context.Clients.Add(newClient);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetClientById), new { id = clientDto.ClientId }, clientDto);
+        // Return the created client
+        return CreatedAtAction(nameof(GetClientById), new { id = newClient.ClientId }, newClient);
     }
 
 

@@ -1,10 +1,11 @@
 ﻿using PsscFinalProject.Data;
-using PsscFinalProject.Events;
 using PsscFinalProject.Events.ServiceBus;
-using PsscFinalProject.Domain;
+using PsscFinalProject.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.OpenApi.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using PsscFinalProject.Data.Models;
 
 namespace PsscFinalProject.Api
@@ -36,8 +37,14 @@ namespace PsscFinalProject.Api
             // Add HTTP client
             builder.Services.AddHttpClient();
 
-            // Add controllers
-            builder.Services.AddControllers();
+            // Add controllers with JSON settings
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // Enable circular reference handling using ReferenceHandler.Preserve
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+                    options.JsonSerializerOptions.WriteIndented = true; // Optional, if you want pretty-printed JSON
+                });
 
             // Add Swagger (OpenAPI)
             builder.Services.AddEndpointsApiExplorer();

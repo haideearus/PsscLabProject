@@ -23,5 +23,5 @@ public partial class ClientDto
 
     public virtual ICollection<OrderDto> Orders { get; set; } = new List<OrderDto>();
 
-    public virtual UserDto User { get; set; } = null!;
+    public virtual UserDto? User { get; set; }
 }
