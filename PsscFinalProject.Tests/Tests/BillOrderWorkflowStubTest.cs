@@ -1,11 +1,10 @@
 ﻿using NUnit.Framework;
 using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PsscFinalProject.Tests.Stubs;
+using Assert = NUnit.Framework.Assert;
 
-namespace PsscFinalProject.Domain.Tests
+namespace PsscFinalProject.Tests.Tests
 {
     [TestFixture]
     public class BillOrderWorkflowStubTests

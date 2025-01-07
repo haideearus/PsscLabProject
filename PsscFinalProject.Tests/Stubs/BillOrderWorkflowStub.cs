@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PsscFinalProject.Domain.Tests
+namespace PsscFinalProject.Tests.Stubs
 {
     public class BillOrderWorkflowStub : BillOrderWorkflow
     {
