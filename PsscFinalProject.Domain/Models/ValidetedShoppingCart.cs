@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public record ValidatedShoppingCart(List<string> Items, decimal TotalPrice) : ICartState;
-  
+    public record ValidatedShoppingCart(decimal TotalAmount) : ICartState;
+
 }

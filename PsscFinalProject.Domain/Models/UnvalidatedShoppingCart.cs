@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public record UnvalidatedShoppingCart(List<string> Items): ICartState;
+    public record UnvalidatedShoppingCart(List<string> Items) : ICartState;
 }

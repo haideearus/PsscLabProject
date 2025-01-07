@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public record PaidShoppingCart(List<string> Items, decimal TotalPrice, string PaymentDetails) : ICartState;
+    public record PaidShoppingCart(decimal TotalAmount, DateTime PaymentDate) : ICartState;
 
 }

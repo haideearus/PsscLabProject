@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public record EmptyShoppingCart : ICartState
-    {
-        public List<string> Items => new List<string>();
-    }
+    public record EmptyShoppingCart() : ICartState;
+    
 }
