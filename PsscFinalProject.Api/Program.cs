@@ -10,6 +10,7 @@ using PsscFinalProject.Data.Models;
 using PsscFinalProject.Data.Repositories;
 using PsscFinalProject.Domain.Repositories;
 
+
 namespace PsscFinalProject.Api
 {
     public class Program
@@ -20,12 +21,12 @@ namespace PsscFinalProject.Api
 
             // Add services to the container.
             builder.Services.AddDbContext<PsscDbContext>(options =>
-     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-           // builder.Services.AddTransient<IShoppingCartRepository, ShoppingCartRepository>();
-          //  builder.Services.AddTransient<IOrderRepository, OrderRepository>();
-            builder.Services.AddTransient<ClientRepository>();
-            //builder.Services.AddTransient<TakeOrderWorkflow>();
+            // Register the repositories with the DI container
+            //builder.Services.AddTransient<IOrderRepository, OrderRepository>(); // Register IOrderRepository
+            //builder.Services.AddTransient<IClientRepository, ClientRepository>(); // Register IClientRepository
+            //builder.Services.AddTransient<TakeOrderWorkflow>(); // Register TakeOrderWorkflow
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();

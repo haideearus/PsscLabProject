@@ -10,16 +10,8 @@ namespace PsscFinalProject.Domain.Models
     {
         public class User
         {
-            // Primary Key
-            public int UserId { get; set; }
-
-            // Username
             public string? UserName { get; set; }
-
-            // Email of the user
             public string? Email { get; set; }
-
-            // Password (or other details)
             public string?  Password { get; set; }
         }
     }
