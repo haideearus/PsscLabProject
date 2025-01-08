@@ -6,6 +6,7 @@ namespace PsscFinalProject.Data.Models;
 
 public partial class OrderDto
 {
+
     [Key]
     public int OrderId { get; set; }
 
@@ -23,9 +24,7 @@ public partial class OrderDto
 
     public virtual ICollection<BillDto> Bills { get; set; } = new List<BillDto>();
 
-    public virtual ClientDto Client { get; set; } = null!;
+    public virtual ClientDto? Client { get; set; }
 
     public virtual ICollection<DeliveryDto> Deliveries { get; set; } = new List<DeliveryDto>();
-
-    public virtual ICollection<OrderitemDto> Orderitems { get; set; } = new List<OrderitemDto>();
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Data;
 using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
@@ -19,53 +20,53 @@ namespace PsscFinalProject.Domain.Workflows
             _context = context;
         }
 
-        public virtual async Task<List<Bill>> GetBillsAsync()
-        {
-            var billDtos = await _context.Bills.ToListAsync();
+        //public virtual async Task<List<Bill>> GetBillsAsync()
+        //{
+        //    var billDtos = await _context.Bills.ToListAsync();
 
-            var bills = billDtos.Select(billDto => new Bill
-            {
-                BillId = billDto.BillId,
-                OrderId = billDto.OrderId,
-                TotalAmount = billDto.TotalAmount,
-                BillingDate = billDto.BillingDate,
-                Order = new Order(
-                    new Client(billDto.Order.Client.ClientId, billDto.Order.Client.Email),  
-                    billDto.Order.OrderDate,
-                    (PaymentMethod)billDto.Order.PaymentMethod, 
-                    billDto.Order.TotalAmount,
-                    billDto.Order.ShippingAddress)
-            }).ToList();
+        //    var bills = billDtos.Select(billDto => new Bill
+        //    {
+        //        BillId = billDto.BillId,
+        //        OrderId = billDto.OrderId,
+        //        TotalAmount = billDto.TotalAmount,
+        //        BillingDate = billDto.BillingDate,
+        //        Order = new Order(
+        //            new Client(billDto.Order.Client.ClientId, billDto.Order.Client.Email),
+        //            billDto.Order.OrderDate,
+        //            (PaymentMethod)billDto.Order.PaymentMethod,
+        //            billDto.Order.TotalAmount,
+        //            billDto.Order.ShippingAddress)
+        //    }).ToList();
 
-            return bills;
-        }
+        //    return bills;
+        //}
 
-        public virtual async Task<Bill> GetBillByIdAsync(int id)
-        {
-            var billDto = await _context.Bills.FindAsync(id);
+        //public virtual async Task<Bill> GetBillByIdAsync(int id)
+        //{
+        //    var billDto = await _context.Bills.FindAsync(id);
 
-            if (billDto == null)
-            {
-               throw new KeyNotFoundException($"Bill with id {id} not found.");
-            }
+        //    if (billDto == null)
+        //    {
+        //        throw new KeyNotFoundException($"Bill with id {id} not found.");
+        //    }
 
-            var bill = new Bill
-            {
-                BillId = billDto.BillId,
-                OrderId = billDto.OrderId,
-                TotalAmount = billDto.TotalAmount,
-                BillingDate = billDto.BillingDate,
-                Order = new Order(
-                    new Client(billDto.Order.Client.ClientId, billDto.Order.Client.Email),
-                    billDto.Order.OrderDate,
-                    (PaymentMethod)billDto.Order.PaymentMethod,
-                    billDto.Order.TotalAmount,
-                    billDto.Order.ShippingAddress
-                )
-            };
+        //    var bill = new Bill
+        //    {
+        //        BillId = billDto.BillId,
+        //        OrderId = billDto.OrderId,
+        //        TotalAmount = billDto.TotalAmount,
+        //        BillingDate = billDto.BillingDate,
+        //        Order = new Order(
+        //            new Client(billDto.Order.Client.ClientId, billDto.Order.Client.Email),
+        //            billDto.Order.OrderDate,
+        //            (PaymentMethod)billDto.Order.PaymentMethod,
+        //            billDto.Order.TotalAmount,
+        //            billDto.Order.ShippingAddress
+        //        )
+        //    };
 
-            return bill;
-        }
+        //    return bill;
+        //}
 
         public virtual async Task SaveBillsAsync(List<Bill> bills)
         {

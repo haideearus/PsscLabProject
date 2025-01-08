@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PsscFinalProject.Domain.Models;
 using System;
 using PsscFinalProject.Data.Models;
+using PsscFinalProject.Data;
 
 [Route("api/[controller]")]
 [ApiController]

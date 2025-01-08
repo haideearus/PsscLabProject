@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Data;
 using PsscFinalProject.Data.Models;
 
 public class ProductRepository

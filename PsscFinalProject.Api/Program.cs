@@ -25,7 +25,7 @@ namespace PsscFinalProject.Api
            // builder.Services.AddTransient<IShoppingCartRepository, ShoppingCartRepository>();
           //  builder.Services.AddTransient<IOrderRepository, OrderRepository>();
             builder.Services.AddTransient<ClientRepository>();
-            builder.Services.AddTransient<TakeOrderWorkflow>();
+            //builder.Services.AddTransient<TakeOrderWorkflow>();
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();

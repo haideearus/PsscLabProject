@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Data.Models;
 
-namespace PsscFinalProject.Data.Models;
+namespace PsscFinalProject.Data;
 
 public partial class PsscDbContext : DbContext
 {
@@ -23,14 +24,12 @@ public partial class PsscDbContext : DbContext
 
     public virtual DbSet<OrderDto> Orders { get; set; }
 
-    public virtual DbSet<OrderitemDto> Orderitems { get; set; }
-
     public virtual DbSet<ProductDto> Products { get; set; }
 
     public virtual DbSet<UserDto> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=andreea-rus.database.windows.net;Database=PSSC_DataBase;User Id=andreea;Password=ProiectPSSC12!");
+        => optionsBuilder.UseSqlServer("Server=andreea-rus.database.windows.net;Database=PSSC_DataBase;User Id=andreea;Password=ProiectPSSC12!;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +56,8 @@ public partial class PsscDbContext : DbContext
         {
             entity.ToTable("CLIENT");
 
+            entity.HasIndex(e => e.Email, "Email").IsUnique();
+
             entity.Property(e => e.ClientId).HasColumnName("Client_ID");
             entity.Property(e => e.Email)
                 .HasMaxLength(200)
@@ -70,10 +71,9 @@ public partial class PsscDbContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(20)
                 .IsUnicode(false);
-            entity.Property(e => e.UserId).HasColumnName("User_ID");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Clients)
-                .HasForeignKey(d => d.UserId)
+            entity.HasOne(d => d.EmailNavigation).WithOne(p => p.Client)
+                .HasForeignKey<ClientDto>(d => d.Email)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CLIENT_Users");
         });
@@ -85,6 +85,9 @@ public partial class PsscDbContext : DbContext
             entity.Property(e => e.DeliveryId)
                 .ValueGeneratedNever()
                 .HasColumnName("Delivery_ID");
+            entity.Property(e => e.Courier)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.DeliveryDate).HasColumnType("datetime");
             entity.Property(e => e.OrderId)
                 .ValueGeneratedOnAdd()
@@ -121,36 +124,13 @@ public partial class PsscDbContext : DbContext
                 .HasConstraintName("FK_ORDER_CLIENT");
         });
 
-        modelBuilder.Entity<OrderitemDto>(entity =>
-        {
-            entity.ToTable("ORDERITEM");
-
-            entity.Property(e => e.OrderItemId)
-                .ValueGeneratedNever()
-                .HasColumnName("OrderItem_ID");
-            entity.Property(e => e.OrderId).HasColumnName("Order_ID");
-            entity.Property(e => e.ProductId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("Product_ID");
-            entity.Property(e => e.Quantity).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.Orderitems)
-                .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ORDERITEM_ORDER");
-
-            entity.HasOne(d => d.Product).WithMany(p => p.Orderitems)
-                .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ORDERITEM_PRODUCT");
-        });
-
         modelBuilder.Entity<ProductDto>(entity =>
         {
             entity.HasKey(e => e.ProductId).HasName("PK_PRODUCT_1");
 
             entity.ToTable("PRODUCT");
+
+            entity.HasIndex(e => e.Code, "Code").IsUnique();
 
             entity.Property(e => e.ProductId).HasColumnName("Product_ID");
             entity.Property(e => e.Code)
@@ -167,14 +147,13 @@ public partial class PsscDbContext : DbContext
 
         modelBuilder.Entity<UserDto>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK_Users_1");
+            entity.HasKey(e => e.Email).HasName("PK_Email");
 
-            entity.HasIndex(e => e.Email, "IX_Users").IsUnique();
+            entity.HasIndex(e => e.Username, "Username").IsUnique();
 
-            entity.Property(e => e.UserId).HasColumnName("User_ID");
             entity.Property(e => e.Email)
-                .HasMaxLength(100)
-                .IsFixedLength();
+                .HasMaxLength(200)
+                .IsUnicode(false);
             entity.Property(e => e.Password).HasColumnType("text");
             entity.Property(e => e.Username)
                 .HasMaxLength(100)

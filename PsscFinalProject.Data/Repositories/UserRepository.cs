@@ -16,9 +16,9 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<UserDto?> GetUserByIdAsync(int userId)
+        public async Task<UserDto?> GetUserByEmailAsync(string Email)
         {
-            return await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+            return await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == Email);
         }
 
         public async Task DeleteUserAsync(int userId)
@@ -46,20 +46,20 @@ namespace PsscFinalProject.Data.Repositories
             return await dbContext.Users.AsNoTracking().ToListAsync();
         }
 
-        public async Task SaveUsersAsync(IEnumerable<UserDto> users)
-        {
-            try
-            {
-                dbContext.Users.AddRange(users.Where(u => u.UserId == 0));
-                dbContext.Users.UpdateRange(users.Where(u => u.UserId > 0));
-                await dbContext.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                // Log the exception or handle it based on your business logic
-                throw new Exception("An error occurred while saving users.", ex);
-            }
-        }
+        //public async Task SaveUsersAsync(IEnumerable<UserDto> users)
+        //{
+        //    try
+        //    {
+        //        dbContext.Users.AddRange(users.Where(u => u.User == 0));
+        //        dbContext.Users.UpdateRange(users.Where(u => u.UserId > 0));
+        //        await dbContext.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        // Log the exception or handle it based on your business logic
+        //        throw new Exception("An error occurred while saving users.", ex);
+        //    }
+        //}
 
     }
 }

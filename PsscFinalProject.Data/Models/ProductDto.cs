@@ -6,6 +6,7 @@ namespace PsscFinalProject.Data.Models;
 
 public partial class ProductDto
 {
+
     [Key]
     public int ProductId { get; set; }
 
@@ -18,6 +19,4 @@ public partial class ProductDto
     public string QuantityType { get; set; } = null!;
 
     public int Stock { get; set; }
-
-    public virtual ICollection<OrderitemDto> Orderitems { get; set; } = new List<OrderitemDto>();
 }

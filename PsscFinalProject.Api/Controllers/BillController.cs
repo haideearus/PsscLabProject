@@ -16,31 +16,31 @@ namespace PsscFinalProject.Api.Controllers
         }
 
         // GET: api/bills
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Bill>>> GetBills()
-        {
-            var bills = await _billWorkflow.GetBillsAsync();
-            return Ok(bills);
-        }
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<Bill>>> GetBills()
+        //{
+        //    var bills = await _billWorkflow.GetBillsAsync();
+        //    return Ok(bills);
+        //}
 
         // GET: api/bills/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Bill>> GetBill(int id)
-        {
-            var bill = await _billWorkflow.GetBillByIdAsync(id);
-            if (bill == null)
-            {
-                return NotFound();
-            }
-            return Ok(bill);
-        }
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<Bill>> GetBill(int id)
+        //{
+        //    var bill = await _billWorkflow.GetBillByIdAsync(id);
+        //    if (bill == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    return Ok(bill);
+        //}
 
-        // POST: api/bills
-        [HttpPost]
-        public async Task<IActionResult> SaveBills([FromBody] List<Bill> bills)
-        {
-            await _billWorkflow.SaveBillsAsync(bills);
-            return CreatedAtAction(nameof(GetBills), new { }, bills);
-        }
+        //// POST: api/bills
+        //[HttpPost]
+        //public async Task<IActionResult> SaveBills([FromBody] List<Bill> bills)
+        //{
+        //    await _billWorkflow.SaveBillsAsync(bills);
+        //    return CreatedAtAction(nameof(GetBills), new { }, bills);
+        //}
     }
 }

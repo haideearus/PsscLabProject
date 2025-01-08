@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Data;
 using PsscFinalProject.Data.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -17,26 +18,6 @@ namespace PsscFinalProject.Api.Controllers
             _context = context;
         }
 
-        // GET: api/users
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
-        {
-            var users = await _context.Users.ToListAsync(); // Ensure "Users" exists in DbContext
-            return Ok(users);
-        }
-
-        // GET: api/users/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserDto>> GetUserById(int id)
-        {
-            var user = await _context.Users.FindAsync(id); // Ensure "Users" exists in DbContext
-            if (user == null)
-            {
-                return NotFound($"User with ID {id} not found.");
-            }
-            return Ok(user);
-        }
-
         // POST: api/users/add
         [HttpPost("add")]
         public async Task<IActionResult> AddUser([FromBody] UserDto userDto)
@@ -48,9 +29,21 @@ namespace PsscFinalProject.Api.Controllers
 
             try
             {
+                // Check if the email already exists in the database
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userDto.Email);
+                if (existingUser != null)
+                {
+                    return Conflict($"A user with the email {userDto.Email} already exists.");
+                }
+
+                // Add the new user
                 await _context.Users.AddAsync(userDto);
                 await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetUserById), new { id = userDto.UserId }, userDto);
+                return CreatedAtAction(nameof(GetUserByEmail), new { email = userDto.Email }, userDto);
+            }
+            catch (DbUpdateException dbEx)
+            {
+                return BadRequest($"Database update failed: {dbEx.Message}");
             }
             catch (Exception ex)
             {
@@ -58,21 +51,42 @@ namespace PsscFinalProject.Api.Controllers
             }
         }
 
-        // DELETE: api/users/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        // GET: api/users
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
-            var user = await _context.Users.FindAsync(id);
+            var users = await _context.Users.ToListAsync(); // Ensure "Users" exists in DbContext
+            return Ok(users);
+        }
+
+        // GET: api/users/email/{email}
+        [HttpGet("email/{email}")]
+        public async Task<ActionResult<UserDto>> GetUserByEmail(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found.");
+                return NotFound($"User with email {email} not found.");
+            }
+            return Ok(user);
+        }
+
+
+        // DELETE: api/users/{email}
+        [HttpDelete("{email}")]
+        public async Task<IActionResult> DeleteUser(string email)
+        {
+            var user = await _context.Users.FindAsync(email);
+            if (user == null)
+            {
+                return NotFound($"User with ID {email} not found.");
             }
 
             try
             {
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
-                return Ok($"User with ID {id} deleted successfully.");
+                return Ok($"User with ID {email} deleted successfully.");
             }
             catch (Exception ex)
             {

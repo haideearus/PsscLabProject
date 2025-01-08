@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Data;
 using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
 using System.Collections.Generic;
@@ -26,40 +27,45 @@ public class ClientController : ControllerBase
         return Ok(clients);
     }
 
-    [HttpPost]
+    [HttpPost("add")]
     public async Task<IActionResult> AddClient([FromBody] ClientDto clientDto)
     {
-        // Validate input
-        if (string.IsNullOrEmpty(clientDto.Email))
+        if (clientDto == null)
         {
-            return BadRequest("Email is required to associate the client with a user.");
+            return BadRequest("Client data cannot be null.");
         }
 
-        // Find the user by email
+        // Check if the user exists with the provided email
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == clientDto.Email);
         if (user == null)
         {
-            return BadRequest("No user found with the provided email address.");
+            return BadRequest($"No user found with email {clientDto.Email}. A user must exist before creating a client.");
         }
 
-        // Associate the client with the found user
-        var newClient = new ClientDto
+        // Check if a client already exists with the same email
+        var existingClient = await _context.Clients.FirstOrDefaultAsync(c => c.Email == clientDto.Email);
+        if (existingClient != null)
         {
-            FirstName = clientDto.FirstName,
-            LastName = clientDto.LastName,
-            Email = clientDto.Email,
-            PhoneNumber = clientDto.PhoneNumber,
-            UserId = user.UserId, // Associate the client with the user's ID
-            User = user // Optional: Set the navigation property
-        };
+            return Conflict($"Client already exists for user with email {clientDto.Email}.");
+        }
 
-        // Add the client to the database
-        _context.Clients.Add(newClient);
-        await _context.SaveChangesAsync();
+        // Set the EmailNavigation property to link the client to the existing user
+        clientDto.EmailNavigation = user;
 
-        // Return the created client
-        return CreatedAtAction(nameof(GetClientById), new { id = newClient.ClientId }, newClient);
+        try
+        {
+            // Add the new client
+            await _context.Clients.AddAsync(clientDto);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetClientById), new { id = clientDto.ClientId }, clientDto);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
+
+
 
 
     // GET: api/clients/{id}
@@ -116,8 +122,7 @@ public class ClientController : ControllerBase
         client.LastName = updatedClientDto.LastName;
         client.Email = updatedClientDto.Email;
         client.PhoneNumber = updatedClientDto.PhoneNumber;
-        client.UserId = updatedClientDto.UserId;
-
+      
         try
         {
             _context.Clients.Update(client);

@@ -11,21 +11,21 @@ namespace PsscFinalProject.Domain.Operations
 {
     public static class MappingOperations
     {
-        public static Bill MapBillDtoToBill(BillDto billDto, OrderDto orderDto)
-        {
-            Client client = new Client(orderDto.Client.ClientId, orderDto.Client.Email);
+        //public static Bill MapBillDtoToBill(BillDto billDto, OrderDto orderDto)
+        //{
+        //    Client client = new Client(orderDto.Client.ClientId, orderDto.Client.Email);
 
-            PaymentMethod paymentMethod = (PaymentMethod)orderDto.PaymentMethod;
+        //    PaymentMethod paymentMethod = (PaymentMethod)orderDto.PaymentMethod;
 
-            return new Bill
-            {
-                BillId = billDto.BillId,
-                OrderId = billDto.OrderId,
-                TotalAmount = billDto.TotalAmount,
-                BillingDate = billDto.BillingDate,
-                Order = new Order(client, orderDto.OrderDate, paymentMethod, orderDto.TotalAmount, orderDto.ShippingAddress)
-            };
-        }
+        //    return new Bill
+        //    {
+        //        BillId = billDto.BillId,
+        //        OrderId = billDto.OrderId,
+        //        TotalAmount = billDto.TotalAmount,
+        //        BillingDate = billDto.BillingDate,
+        //        Order = new Order(client, orderDto.OrderDate, paymentMethod, orderDto.TotalAmount, orderDto.ShippingAddress)
+        //    };
+        //}
         public static Product MapProductDtoToProduct(ProductDto productDto)
         {
             return new Product
@@ -50,8 +50,7 @@ namespace PsscFinalProject.Domain.Operations
             {
                 FirstName = clientDto.FirstName,
                 LastName = clientDto.LastName,
-                PhoneNumber = clientDto.PhoneNumber,
-                UserId = clientDto.UserId
+                PhoneNumber = clientDto.PhoneNumber
             };
         }
     }

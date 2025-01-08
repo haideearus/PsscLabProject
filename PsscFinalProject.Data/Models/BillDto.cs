@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using PsscFinalProject.Data.Models;
 
 namespace PsscFinalProject.Data.Models;
 
@@ -15,5 +16,5 @@ public partial class BillDto
 
     public DateTime BillingDate { get; set; }
 
-    public virtual OrderDto Order { get; set; } = null!;
+    public virtual OrderDto? Order { get; set; }
 }
