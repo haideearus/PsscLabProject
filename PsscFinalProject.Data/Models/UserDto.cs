@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace PsscFinalProject.Data.Models;
 
@@ -13,5 +14,6 @@ public partial class UserDto
     [Key]
     public string Email { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual ClientDto? Client { get; set; }
 }
