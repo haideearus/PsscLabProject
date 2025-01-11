@@ -7,6 +7,6 @@ namespace PsscFinalProject.Data.Repositories
 {
     public interface IClientRepository
     {
-      
+        Task<List<ClientEmail>> GetExistingClientsAsync(IEnumerable<string> clientsToCheck);
     }
 }

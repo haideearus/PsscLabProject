@@ -1,85 +1,124 @@
-﻿//using Microsoft.Extensions.Logging;
-//using PsscFinalProject.Data.Repositories;
-//using PsscFinalProject.Domain.Models;
-//using PsscFinalProject.Domain.Repositories;
-//using System;
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
+﻿using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Domain.Operations;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using static PsscFinalProject.Domain.Models.Order;
+using static PsscFinalProject.Domain.Models.OrderPublishEvent;
+using PsscFinalProject.Data.Repositories;
 
-//public class TakeOrderWorkflow
-//{
-//    private readonly IOrderRepository orderRepository;
-//    private readonly IClientRepository clientRepository;
-//    private readonly ILogger<TakeOrderWorkflow> logger;
+namespace PsscFinalProject.Domain.Workflows
+{
+    public class PublishOrderWorkflow
+    {
+        private readonly IClientRepository clientRepository;
+        private readonly IOrderRepository orderRepository;
+        private readonly IProductRepository productRepository;
+        private readonly ILogger<PublishOrderWorkflow> logger;
 
-//    public TakeOrderWorkflow(
-//        IOrderRepository orderRepository,
-//        IClientRepository clientRepository,
-//        ILogger<TakeOrderWorkflow> logger)
-//    {
-//        this.orderRepository = orderRepository;
-//        this.clientRepository = clientRepository;
-//        this.logger = logger;
-//    }
+        public PublishOrderWorkflow(
+            IClientRepository clientRepository,
+            IOrderRepository orderRepository,
+            IProductRepository productRepository,
+            ILogger<PublishOrderWorkflow> logger)
+        {
+            this.clientRepository = clientRepository;
+            this.orderRepository = orderRepository;
+            this.productRepository = productRepository;
+            this.logger = logger;
+        }
 
-//    public async Task<IOrderProcessedEvent> ExecuteAsync(TakeOrderCommand command)
-//    {
-//        try
-//        {
-//            // 1. Retrieve or create a new empty shopping cart for the client (this cart is specific to this order)
-//            var shoppingCart = await CreateNewShoppingCartAsync(command.ClientId, command.ClientEmail);
+        public async Task<IOrderPublishEvent> ExecuteAsync(PublishOrderCommand command)
+        {
+            try
+            {
+                // Load existing data
+                IEnumerable<string> productCodesToCheck = command.InputOrders.SelectMany(order => order.ProductList.Select(product => product.ProductId));
+                List<ProductCode> existingProducts = await productRepository.GetExistingProductsAsync(productCodesToCheck);
 
-//            // 2. Add products to the shopping cart
-//            shoppingCart = shoppingCart.AddProduct(command.ProductIds);
+                // Get existing clients from the repository
+                IEnumerable<string> clientEmailsToCheck = command.InputOrders.Select(order => order.ProductList.First().ProductId); // Assuming first product has the client info
+                List<ClientEmail> existingClients = await clientRepository.GetExistingClientsAsync(clientEmailsToCheck);
 
-//            // 3. Compute the total amount and validate the cart
-//            decimal totalAmount = await ComputeTotalAmountAsync(command.ProductIds); // Simulate total price calculation
-//            shoppingCart = shoppingCart.ComputeTotal(totalAmount);
+                // Execute business logic on each order
+                List<IOrderPublishEvent> events = new List<IOrderPublishEvent>();
+                foreach (var order in command.InputOrders)
+                {
+                    // Null check for order
+                    if (order == null)
+                    {
+                        throw new ArgumentNullException(nameof(order), "Order cannot be null");
+                    }
 
-//            // 4. Pay for the cart and transition it to the "Paid" state
-//            shoppingCart = shoppingCart.Pay();
+                    IOrder orderState = ExecuteBusinessLogic(order, existingProducts, existingClients);
 
-//            // 5. Create an order from the paid cart (this is where the order is placed)
-//            var order = await shoppingCart.PlaceOrderAsync(command.ShippingAddress);
+                    // Save the final state of the order
+                    if (orderState is PaidOrder paidOrder)
+                    {
+                        await orderRepository.SaveOrdersAsync(paidOrder);
+                    }
 
-//            // 6. Save the order to the database
-//            //await orderRepository.SaveOrderAsync(order);
+                    // Generate event based on the order state
+                    IOrderPublishEvent orderEvent = orderState.ToEvent();
+                    events.Add(orderEvent);
+                }
 
-//            // 7. Return a success event indicating the order was processed successfully
-//            logger.LogInformation($"Order placed successfully for Client ID {shoppingCart.ClientId}.");
-//            return new OrderProcessedEvent(order.OrderId, "Order has been successfully processed.");
-//        }
-//        catch (Exception ex)
-//        {
-//            logger.LogError(ex, "An error occurred while processing the order.");
-//            return new OrderProcessingFailedEvent("An unexpected error occurred.");
-//        }
-//    }
+                // Return the appropriate event(s)
+                return events.Count == 1 ? events.First() : new OrderPublishFailedEvent(new List<string> { "Multiple orders failed or no valid order found." });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while publishing orders");
+                return new OrderPublishFailedEvent(new List<string> { "Unexpected error" });
+            }
+        }
 
-//    // Helper method to create a new empty shopping cart for the client (this cart is fresh and specific to this order)
-//    private async Task<ShoppingCart> CreateNewShoppingCartAsync(int clientId, string clientEmail)
-//    {
-//        // Retrieve the client to verify existence
-//        var client = await clientRepository.GetClientByIdAsync(clientId);
+        private IOrder ExecuteBusinessLogic(
+     UnvalidatedOrder unvalidatedOrder,
+     List<ProductCode> existingProducts,
+     List<ClientEmail> existingClients)
+        {
+            // Validate the order
+            Func<string, bool> checkProductExists = productId => existingProducts.Any(p => p.Equals(productId));
+            var validateOrderOperation = new ValidateOrderOperation(checkProductExists);
 
-//        if (client == null)
-//        {
-//            throw new InvalidOperationException("Client not found.");
-//        }
+            // Null check before transforming the order
+            if (unvalidatedOrder == null)
+            {
+                throw new ArgumentNullException(nameof(unvalidatedOrder), "Order cannot be null");
+            }
 
-//        // Create a new empty shopping cart (new order, no products yet)
-//        var shoppingCart = new ShoppingCart(clientId, clientEmail, clientRepository);
+            IOrder validatedOrder = validateOrderOperation.Transform(unvalidatedOrder);
 
-//        logger.LogInformation($"Created a new empty shopping cart for Client ID {clientId}.");
+            // If the order is valid, calculate its totals
+            if (validatedOrder is ValidatedOrder validOrder)
+            {
+                var calculateOrderOperation = new CalculateOrderOperation();
+                IOrder calculatedOrder = calculateOrderOperation.Transform(validOrder, existingProducts);
 
-//        return shoppingCart;
-//    }
+                // Initialize PublishOrderOperation
+                var publishOrderOperation = new PublishOrderOperation();
 
-//    // Simulate total price calculation (replace with actual product pricing logic)
-//    private Task<decimal> ComputeTotalAmountAsync(List<string> productIds)
-//    {
-//        // For demonstration, let's assume each product costs $10. Replace this with actual pricing logic.
-//        decimal totalAmount = productIds.Count * 10.00m; // Example: each product costs $10
-//        return Task.FromResult(totalAmount);
-//    }
-//}
+                if (calculatedOrder is CalculatedOrder calculated)
+                {
+                    return publishOrderOperation.Transform(calculated);
+                }
+                throw new InvalidOperationException("calculatedOrder is not a CalculatedOrder");
+            }
+
+            // If the order is invalid, return an invalid order state
+            if (validatedOrder is InvalidOrder invalidOrder)
+            {
+                return invalidOrder; // No further processing needed, it is a failure
+            }
+
+            // Return the validated order if nothing else applies
+            return validatedOrder;
+        }
+
+
+    }
+}

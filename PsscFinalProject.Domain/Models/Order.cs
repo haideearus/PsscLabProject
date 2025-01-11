@@ -43,16 +43,40 @@ namespace PsscFinalProject.Domain.Models
                 public IReadOnlyCollection<ValidatedProduct> ProductList { get; }
             }
 
-            // Represents the calculated state of the order (with totals calculated for each product)
-            public record CalculatedOrder : IOrder
+        // Represents the calculated state of the order (with totals calculated for each product)
+        public record CalculatedOrder : IOrder
+        {
+            public CalculatedOrder(
+                IReadOnlyCollection<CalculatedProduct> productList,
+                int orderId,
+                DateTime orderDate,
+                int paymentMethod,
+                decimal totalAmount,
+                string shippingAddress,
+                int? state,
+                ClientEmail clientEmail
+            )
             {
-                internal CalculatedOrder(IReadOnlyCollection<CalculatedProduct> productList)
-                {
-                    ProductList = productList;
-                }
-
-                public IReadOnlyCollection<CalculatedProduct> ProductList { get; }
+                ProductList = productList;
+                OrderId = orderId;
+                OrderDate = orderDate;
+                PaymentMethod = paymentMethod;
+                TotalAmount = totalAmount;
+                ShippingAddress = shippingAddress;
+                State = state;
+                ClientEmail = clientEmail;
             }
+
+            public IReadOnlyCollection<CalculatedProduct> ProductList { get; set; }
+            public int OrderId { get; set; }
+            public DateTime OrderDate { get; set; }
+            public int PaymentMethod { get; set; }
+            public decimal TotalAmount { get; set; }
+            public string ShippingAddress { get; set; }
+            public int? State { get; set; }
+            public ClientEmail ClientEmail { get; set; }
+        }
+
 
         // Represents the paid state of the order (after payment has been processed)
         public record PaidOrder : IOrder

@@ -1,26 +1,33 @@
-using Microsoft.EntityFrameworkCore;
-using PsscFinalProject.Data;
-using PsscFinalProject.Data.Models;
+using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Data.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-public class ProductRepository : IProductRepository
+namespace PsscFinalProject.Data.Repositories
 {
-    private readonly PsscDbContext dbContext;
-
-    public ProductRepository(PsscDbContext dbContext)
+    public class ProductRepository : IProductRepository
     {
-        this.dbContext = dbContext;
-    }
+        private readonly PsscDbContext dbContext;
 
-    public async Task<List<ProductDto>> GetProductsAsync()
-    {
-        return await dbContext.Products.AsNoTracking().ToListAsync();
-    }
+        public ProductRepository(PsscDbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public async Task SaveProductsAsync(IEnumerable<ProductDto> products)
-    {
-        dbContext.Products.AddRange(products.Where(p => p.ProductId == 0));
-        dbContext.Products.UpdateRange(products.Where(p => p.ProductId > 0));
-        await dbContext.SaveChangesAsync();
+        public async Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck)
+        {
+            // Fetch products based on the provided product codes
+            List<ProductDto> products = await dbContext.Products
+                .Where(product => productCodesToCheck.Contains(product.Code))
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Map the fetched products to domain models (ProductCode)
+            return products.Select(product => new ProductCode(product.Code))
+                           .ToList();
+        }
     }
 }

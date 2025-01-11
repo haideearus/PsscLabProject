@@ -6,6 +6,7 @@ namespace PsscFinalProject.Domain.Repositories
 {
     public interface IProductRepository
     {
-      
+
+        Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productsToCheck);
     }
 }

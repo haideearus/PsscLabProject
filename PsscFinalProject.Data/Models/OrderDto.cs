@@ -13,8 +13,6 @@ public partial class OrderDto
 
     public int ClientId { get; set; }
 
-    public int ProductId { get; set; }
-
     public DateTime OrderDate { get; set; }
 
     public int PaymentMethod { get; set; }

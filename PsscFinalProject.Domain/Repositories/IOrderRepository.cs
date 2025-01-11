@@ -7,8 +7,8 @@ namespace PsscFinalProject.Domain.Repositories
 {
     public interface IOrderRepository
     {
-            Task<List<CalculatedOrder>> GetExistingGradesAsync();
+        Task<List<CalculatedOrder>> GetExistingOrdersAsync();
 
-            Task SaveGradesAsync(PaidOrder grades);
-        }
+        Task SaveOrdersAsync(PaidOrder paidOrder);
+    }
 }
