@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using PsscFinalProject.Data;
 using PsscFinalProject.Data.Models;
+using PsscFinalProject.Domain.Repositories;
 
-public class ProductRepository
+public class ProductRepository : IProductRepository
 {
     private readonly PsscDbContext dbContext;
 

@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using PsscFinalProject.Domain.Repositories;
 
 namespace PsscFinalProject.Data.Repositories
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly PsscDbContext dbContext;
 

@@ -17,4 +17,8 @@
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>
+	<ItemGroup>
+		<!-- Add this line to reference the Domain project -->
+		<ProjectReference Include="..\PsscFinalProject.Domain\PsscFinalProject.Domain.csproj" />
+	</ItemGroup>
 </Project>
