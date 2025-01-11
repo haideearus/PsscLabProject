@@ -3,10 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PsscFinalProject.Domain.Repositories;
 
 namespace PsscFinalProject.Data.Repositories
 {
-    public class BillRepository
+    public class BillRepository : IBillRepository
     {
         private readonly PsscDbContext dbContext;
 
