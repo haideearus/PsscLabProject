@@ -1,15 +1,13 @@
 ﻿using PsscFinalProject.Data;
-using PsscFinalProject.Events.ServiceBus;
+using PsscFinalProject.Data.Repositories;
+using PsscFinalProject.Domain.Repositories;
 using PsscFinalProject.Events;
+using PsscFinalProject.Events.ServiceBus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.OpenApi.Models;
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using PsscFinalProject.Data.Models;
-using PsscFinalProject.Data.Repositories;
-using PsscFinalProject.Domain.Repositories;
-
+using PsscFinalProject.Domain.Workflows;
 
 namespace PsscFinalProject.Api
 {
@@ -23,10 +21,14 @@ namespace PsscFinalProject.Api
             builder.Services.AddDbContext<PsscDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Register the repositories with the DI container
-            //builder.Services.AddTransient<IOrderRepository, OrderRepository>(); // Register IOrderRepository
-            //builder.Services.AddTransient<IClientRepository, ClientRepository>(); // Register IClientRepository
-            //builder.Services.AddTransient<TakeOrderWorkflow>(); // Register TakeOrderWorkflow
+            // Register repositories with the DI container
+            builder.Services.AddTransient<IOrderRepository, OrderRepository>(); // Register OrderRepository
+            builder.Services.AddTransient<IClientRepository, ClientRepository>(); // Register ClientRepository
+            builder.Services.AddTransient<IProductRepository, ProductRepository>(); // Register ProductRepository
+
+            // Register workflows
+            //builder.Services.AddTransient<TakeOrderWorkflow>(); // Example workflow registration
+            builder.Services.AddTransient<PublishOrderWorkflow>(); // Another workflow
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();
@@ -46,7 +48,7 @@ namespace PsscFinalProject.Api
                 {
                     // Enable circular reference handling using ReferenceHandler.Preserve
                     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-                    options.JsonSerializerOptions.WriteIndented = true; // Optional, if you want pretty-printed JSON
+                    options.JsonSerializerOptions.WriteIndented = true; // Pretty-printed JSON
                 });
 
             // Add Swagger (OpenAPI)

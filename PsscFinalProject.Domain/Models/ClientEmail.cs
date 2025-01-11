@@ -6,7 +6,7 @@ namespace PsscFinalProject.Domain.Models
 {
     public record ClientEmail
     {
-        private static readonly Regex ValidPattern = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+        private static readonly Regex Pattern = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
 
         public string Value { get; }
 
@@ -23,7 +23,7 @@ namespace PsscFinalProject.Domain.Models
             }
         }
 
-        private static bool IsValid(string stringValue) => ValidPattern.IsMatch(stringValue);
+        private static bool IsValid(string stringValue) => Pattern.IsMatch(stringValue);
 
         public override string ToString()
         {
