@@ -5,7 +5,7 @@ namespace PsscFinalProject.Domain.Models
 {
     public record ProductCode
     {
-        private static readonly Regex ValidPattern = new(@"^PRD[0-9]{3}$");
+        private static Regex Pattern = new(@"^PRD[0-9]{3}$");
 
         public string Value { get; }
 
@@ -21,7 +21,7 @@ namespace PsscFinalProject.Domain.Models
             }
         }
 
-        private static bool IsValid(string stringValue) => ValidPattern.IsMatch(stringValue);
+        private static bool IsValid(string stringValue) => Pattern.IsMatch(stringValue);
 
         public override string ToString()
         {

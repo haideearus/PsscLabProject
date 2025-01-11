@@ -118,7 +118,5 @@ namespace PsscFinalProject.Domain.Workflows
             // Return the validated order if nothing else applies
             return validatedOrder;
         }
-
-
     }
 }

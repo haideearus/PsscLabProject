@@ -1,36 +1,37 @@
-﻿//using Microsoft.AspNetCore.Mvc;
-//using PsscFinalProject.Domain.Models;
-//using PsscFinalProject.Domain.Workflows;
-//using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Mvc;
+using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Workflows;
+using static PsscFinalProject.Domain.Models.OrderPublishEvent;
 
-//namespace PsscFinalProject.Api.Controllers
-//{
-//    [ApiController]
-//    [Route("api/[controller]")]
-//    public class OrdersController : ControllerBase
-//    {
-//        private readonly TakeOrderWorkflow takeOrderWorkflow;
+namespace PsscFinalProject.Api.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class OrdersController : ControllerBase
+    {
+        private readonly PublishOrderWorkflow _workflow;
 
-//        public OrdersController(TakeOrderWorkflow takeOrderWorkflow)
-//        {
-//            this.takeOrderWorkflow = takeOrderWorkflow;
-//        }
+        public OrdersController(PublishOrderWorkflow workflow)
+        {
+            _workflow = workflow;
+        }
 
-//        [HttpPost("take-order")]
-//        public async Task<IActionResult> TakeOrder([FromBody] TakeOrderCommand command)
-//        {
-//            var result = await takeOrderWorkflow.ExecuteAsync(command);
+        [HttpPost("publish")]
+        public async Task<IActionResult> PublishOrder([FromBody] PublishOrderCommand command)
+        {
+            if (command == null || command.InputOrders == null || !command.InputOrders.Any())
+            {
+                return BadRequest("Invalid order data.");
+            }
 
-//            if (result is OrderProcessedEvent success)
-//            {
-//                return Ok(new { success.OrderId, success.Message });
-//            }
-//            else if (result is OrderProcessingFailedEvent failure)
-//            {
-//                return BadRequest(new { failure.Reason });
-//            }
+            var result = await _workflow.ExecuteAsync(command);
 
-//            return StatusCode(500, "An unexpected error occurred.");
-//        }
-//    }
-//}
+            if (result is OrderPublishFailedEvent failedEvent)
+            {
+                return BadRequest(new { Errors = failedEvent.Reasons });
+            }
+
+            return Ok(result);
+        }
+    }
+}
