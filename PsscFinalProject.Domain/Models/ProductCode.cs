@@ -5,7 +5,7 @@ namespace PsscFinalProject.Domain.Models
 {
     public record ProductCode
     {
-        private static Regex Pattern = new(@"^PRD[0-9]{3}$");
+        public const string Pattern = @"^[A-Za-z0-9]+$";
 
         public string Value { get; }
 
@@ -20,11 +20,11 @@ namespace PsscFinalProject.Domain.Models
                 throw new InvalidProductCodeException("Invalid product code format.");
             }
         }
-
-        private static bool IsValid(string stringValue) => Pattern.IsMatch(stringValue);
-        public Regex getPattern()
+        private static bool IsValid(string stringValue)
         {
-            return Pattern;
+            // Creezi un obiect Regex și folosești IsMatch
+            var regex = new Regex(Pattern);
+            return regex.IsMatch(stringValue);
         }
         public override string ToString()
         {
