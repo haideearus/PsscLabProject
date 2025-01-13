@@ -6,11 +6,10 @@ namespace PsscFinalProject.Domain.Models
 {
     public record ClientEmail
     {
-        private static readonly Regex Pattern = new(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+        public const string Pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
 
         public string Value { get; }
 
-        // Make the constructor public so it can be accessed outside this record
         public ClientEmail(string value)
         {
             if (IsValid(value))
@@ -23,7 +22,11 @@ namespace PsscFinalProject.Domain.Models
             }
         }
 
-        private static bool IsValid(string stringValue) => Pattern.IsMatch(stringValue);
+        private static bool IsValid(string stringValue)
+        {
+            var regex = new Regex(Pattern); 
+            return regex.IsMatch(stringValue);
+        }
 
         public override string ToString()
         {

@@ -5,7 +5,7 @@ namespace PsscFinalProject.Domain.Models
 {
     public record ProductCode
     {
-        private static Regex Pattern = new(@"^PRD[0-9]{3}$");
+        public const string Pattern = @"^[A-Za-z0-9]+$";
 
         public string Value { get; }
 
@@ -21,7 +21,12 @@ namespace PsscFinalProject.Domain.Models
             }
         }
 
-        private static bool IsValid(string stringValue) => Pattern.IsMatch(stringValue);
+        private static bool IsValid(string stringValue)
+        {
+            // Creezi un obiect Regex și folosești IsMatch
+            var regex = new Regex(Pattern);
+            return regex.IsMatch(stringValue);
+        }
 
         public override string ToString()
         {
