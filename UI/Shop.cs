@@ -22,5 +22,10 @@ namespace UI
         {
             MessageBox.Show("Numele primit este: " + Name);
         }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
