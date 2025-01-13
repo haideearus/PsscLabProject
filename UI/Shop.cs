@@ -13,9 +13,12 @@ namespace UI
 {
     public partial class Shop : Form
     {
-        public string Name { get; set; }
-        public Shop()
+        //public string Name { get; set; }
+        //private ShoppingCart _shoppingCart = new ShoppingCart();
+
+        public Shop(string name)
         {
+            Name = name;
             InitializeComponent();
         }
         private void Form2_Load(object sender, EventArgs e)
