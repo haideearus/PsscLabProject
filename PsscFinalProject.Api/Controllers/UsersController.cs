@@ -18,9 +18,9 @@ namespace PsscFinalProject.Api.Controllers
 
         // GET: api/users
         [HttpGet]
-        public ActionResult<IEnumerable<UserDto>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
-            var users = _userService.Users.ToListAsync();
+            var users =await _userService.Users.ToListAsync();
             return Ok(users);
         }
 
@@ -38,13 +38,13 @@ namespace PsscFinalProject.Api.Controllers
 
         // POST: api/users
         [HttpPost]
-        public ActionResult<UserDto> CreateUser([FromBody] UserDto newUser)
+        public async Task<ActionResult<UserDto>> CreateUser([FromBody] UserDto newUser)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var createdUser = _userService.Users.AddAsync(newUser);
+            var createdUser = await _userService.Users.AddAsync(newUser);
             return CreatedAtAction(nameof(GetUser), new { id = newUser.Username }, createdUser);
         }
 
