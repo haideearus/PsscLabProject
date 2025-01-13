@@ -6,7 +6,7 @@ namespace PsscFinalProject.Api.Models
     public class InputOrder
     {
         [Required]
-        [RegularExpression(ClientEmail.Pattern.ToString(), ErrorMessage = "Invalid email format.")] // Use ToString() to get the pattern string
+        //[RegularExpression(ClientEmail.Pattern.ToString(), ErrorMessage = "Invalid email format.")] // Use ToString() to get the pattern string
         public required string ClientEmail { get; set; } // Add 'required' modifier for non-nullable property
 
         [Required]
@@ -15,8 +15,9 @@ namespace PsscFinalProject.Api.Models
 
     public class InputProduct
     {
+
         [Required]
-        [RegularExpression(ProductCode.Pattern.ToString(), ErrorMessage = "Invalid product code format.")] // Use ToString() to get the pattern string
+       // [RegularExpression(ProductCode.Pattern.ToString(), ErrorMessage = "Invalid product code format.")] // Use ToString() to get the pattern string
         public required string ProductId { get; set; } // Add 'required' modifier for non-nullable property
 
         [Required]

@@ -22,7 +22,10 @@ namespace PsscFinalProject.Domain.Models
         }
 
         private static bool IsValid(string stringValue) => Pattern.IsMatch(stringValue);
-
+        public Regex getPattern()
+        {
+            return Pattern;
+        }
         public override string ToString()
         {
             return Value;

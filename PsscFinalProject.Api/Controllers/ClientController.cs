@@ -8,8 +8,8 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class ClientController : ControllerBase
 {
     private readonly PsscDbContext _context;
