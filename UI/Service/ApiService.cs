@@ -15,7 +15,7 @@ namespace UI.Service
         public ApiService()
         {
             _client = new HttpClient();
-            _client.BaseAddress = new Uri("https://localhost:5001/api/"); // Înlocuiește cu adresa API-ului tău
+            _client.BaseAddress = new Uri("https://localhost:7195/api/"); // Înlocuiește cu adresa API-ului tău
             _client.DefaultRequestHeaders.Accept.Clear();
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
