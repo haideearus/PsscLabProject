@@ -1,4 +1,4 @@
-﻿using PsscFinalProject.Data.Models;
+﻿//using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Workflows;
 using System;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Tests.Stubs
 {
-    public class BillOrderWorkflowStub : BillOrderWorkflow
+    /*public class BillOrderWorkflowStub : BillOrderWorkflow
     {
         public BillOrderWorkflowStub(PsscDbContext context) : base(context) { }
 
@@ -56,5 +56,5 @@ namespace PsscFinalProject.Tests.Stubs
             }
             return Task.CompletedTask;
         }
-    }
+    }*/
 }

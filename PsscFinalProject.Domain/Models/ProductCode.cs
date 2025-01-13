@@ -20,14 +20,12 @@ namespace PsscFinalProject.Domain.Models
                 throw new InvalidProductCodeException("Invalid product code format.");
             }
         }
-
         private static bool IsValid(string stringValue)
         {
             // Creezi un obiect Regex și folosești IsMatch
             var regex = new Regex(Pattern);
             return regex.IsMatch(stringValue);
         }
-
         public override string ToString()
         {
             return Value;

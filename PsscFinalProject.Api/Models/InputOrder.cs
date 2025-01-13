@@ -25,6 +25,7 @@ namespace PsscFinalProject.Api.Models
 
     public class InputProduct
     {
+
         [Required]
         [RegularExpression(ProductCode.Pattern, ErrorMessage = "Invalid product code format.")]
         public string ProductId { get; set; }
