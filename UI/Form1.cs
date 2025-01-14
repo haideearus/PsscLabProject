@@ -44,9 +44,9 @@ namespace UI
 
             if (userExists)
             {
-                Shop shop = new Shop();
-                shop.Name = email;
+                Shop shop = new Shop(email);
                 shop.Show();
+                this.Hide();
             }
             else
             {
@@ -79,7 +79,6 @@ namespace UI
                             if(item["password"]?.ToString() == password)
                             {
                                 return true;
-                                break;
                             }
                         }
                     }
@@ -94,6 +93,11 @@ namespace UI
             
 
             return false;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
