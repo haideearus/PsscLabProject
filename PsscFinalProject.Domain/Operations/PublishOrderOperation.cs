@@ -15,11 +15,23 @@ namespace PsscFinalProject.Domain.Operations
             calculatedOrder.ProductList.Aggregate(csv, (export, product) =>
                 export.AppendLine(GenerateCsvLine(product)));
 
-            PaidOrder paidOrder = new(calculatedOrder.ProductList, csv.ToString(), DateTime.Now);
+            // Include all required parameters for PaidOrder
+            PaidOrder paidOrder = new(
+                calculatedOrder.ClientEmail,
+                calculatedOrder.ProductList,
+                csv.ToString(),
+                calculatedOrder.OrderDate,           // Order date
+                calculatedOrder.PaymentMethod,       // Payment method
+                calculatedOrder.TotalAmount,         // Total amount
+                calculatedOrder.ShippingAddress,     // Shipping address
+                calculatedOrder.State,               // State
+                null                                 // Optional OrderId, null at this stage
+            );
+
             return paidOrder;
         }
 
         private static string GenerateCsvLine(CalculatedProduct product) =>
-            $"{product.ProductId}, {product.Name}, {product.Price}, {product.Quantity}, {product.TotalPrice}";
+            $"{product.ProductCode.Value}, {product.ProductPrice.Value:F2}, {product.ProductQuantity.Value}, {product.TotalPrice:F2}";
     }
 }

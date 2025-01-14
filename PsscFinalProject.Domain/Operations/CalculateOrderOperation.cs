@@ -1,57 +1,76 @@
-﻿using PsscFinalProject.Domain.Models;
+﻿using Microsoft.Extensions.Logging;
+using PsscFinalProject.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using static PsscFinalProject.Domain.Models.Order;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("PsscFinalProject.Tests")]
+
 
 namespace PsscFinalProject.Domain.Operations
 {
     internal class CalculateOrderOperation : OrderOperation
     {
-        internal CalculateOrderOperation()
-        {
-        }
+        internal CalculateOrderOperation() { }
 
         protected override IOrder OnValidated(ValidatedOrder validatedOrder)
         {
-            // Calculate the total amount and price for each product
-            List<CalculatedProduct> calculatedProducts = validatedOrder.ProductList
-                .Select(validatedProduct => CalculateAndMatchProduct(validatedProduct))
-                .ToList();
-
-            decimal totalAmount = calculatedProducts.Sum(product => product.TotalPrice);
-
-            // Handle null ProductId
-            var firstProduct = validatedOrder.ProductList.FirstOrDefault();
-            if (firstProduct == null || string.IsNullOrEmpty(firstProduct.ProductId))
+            if (validatedOrder == null)
             {
-                throw new InvalidOperationException("Product ID cannot be null or empty.");
+                throw new ArgumentNullException(nameof(validatedOrder), "Validated order cannot be null");
             }
 
+            // Calculate total price for each product
+            var calculatedProducts = validatedOrder.ProductList
+                .Select(product =>
+                {
+                    var totalPrice = product.ProductPrice.Value * product.ProductQuantity.Value;
+                    return new CalculatedProduct(
+                        product.ProductName,
+                        product.ProductCode,
+                        product.ProductPrice,
+                        product.ProductQuantityType,
+                        product.ProductQuantity,
+                        totalPrice
+                    );
+                }).ToList();
+
+            // Calculate total order amount
+            var totalAmount = calculatedProducts.Sum(product => product.TotalPrice);
+
+            // Create and return a CalculatedOrder
             return new CalculatedOrder(
-                calculatedProducts.AsReadOnly(),
-                orderId: 0,  // Placeholder, you can add actual logic to generate Order ID
-                orderDate: DateTime.Now,  // Placeholder, use current time or your business logic for the order date
-                paymentMethod: 1, // Placeholder, you may get the actual payment method value
+                productList: calculatedProducts.AsReadOnly(),
+                orderDate: DateTime.Now,
+                paymentMethod: 1, // Default payment method, can be customized
                 totalAmount: totalAmount,
-                shippingAddress: "", // Placeholder, you may need to extract it from the order input
-                state: null, // Placeholder, set an appropriate state based on business logic
-                clientEmail: new ClientEmail(firstProduct.ProductId) // Ensure ProductId is not null
+                shippingAddress: "Default Address", // Customize as needed
+                state: null, // Optional state
+                clientEmail: validatedOrder.Email
             );
         }
 
-        private static CalculatedProduct CalculateAndMatchProduct(ValidatedProduct validatedProduct)
-        {
-            // Calculate total price: Price * Quantity
-            decimal totalPrice = validatedProduct.Price * validatedProduct.Quantity;
 
-            return new CalculatedProduct(
-                validatedProduct.ProductId,
-                validatedProduct.Name,
-                validatedProduct.Price,
-                validatedProduct.Quantity,
-                totalPrice
-            );
-        }
+        private static CalculatedProduct CalculateProduct(ValidatedProduct validatedProduct)
+{
+    if (validatedProduct.ProductPrice.Value <= 0 || validatedProduct.ProductQuantity.Value <= 0)
+    {
+        throw new InvalidOperationException($"Invalid product price or quantity for {validatedProduct.ProductCode.Value}");
+    }
+
+    var totalPrice = validatedProduct.ProductPrice.Value * validatedProduct.ProductQuantity.Value;
+
+    return new CalculatedProduct(
+        validatedProduct.ProductName,
+        validatedProduct.ProductCode,
+        validatedProduct.ProductPrice,
+        validatedProduct.ProductQuantityType,
+        validatedProduct.ProductQuantity,
+        totalPrice
+    );
+}
+
     }
 }

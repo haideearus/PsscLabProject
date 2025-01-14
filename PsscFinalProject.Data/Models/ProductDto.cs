@@ -20,4 +20,7 @@ public partial class ProductDto
     public string QuantityType { get; set; } = null!;
 
     public int Stock { get; set; }
+
+    [JsonIgnore]
+    public ICollection<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
 }

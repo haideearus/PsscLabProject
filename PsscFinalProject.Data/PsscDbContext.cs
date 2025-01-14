@@ -24,32 +24,32 @@ public partial class PsscDbContext : DbContext
 
     public virtual DbSet<OrderDto> Orders { get; set; }
 
+    public virtual DbSet<OrderItemDto> OrderItems { get; set; }
+
     public virtual DbSet<ProductDto> Products { get; set; }
 
     public virtual DbSet<UserDto> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=andreea-rus.database.windows.net;Database=PSSC_DataBase;User Id=andreea;Password=ProiectPSSC12!;");
+       => optionsBuilder.UseSqlServer("Server=andreea-rus.database.windows.net;Database=PSSC_DataBase;User Id=andreea;Password=ProiectPSSC12!");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<BillDto>(entity =>
         {
+            entity.HasKey(e => e.BillId).HasName("PK_BILLS");
+
             entity.ToTable("BILL");
 
-            entity.Property(e => e.BillId)
-                .ValueGeneratedNever()
-                .HasColumnName("Bill_ID");
+            entity.Property(e => e.BillId).HasColumnName("Bill_ID");
             entity.Property(e => e.BillingDate).HasColumnType("datetime");
-            entity.Property(e => e.OrderId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("Order_ID");
+            entity.Property(e => e.OrderId).HasColumnName("Order_ID");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Order).WithMany(p => p.Bills)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_BILL_ORDER");
+                .HasConstraintName("FK_BILLS_ORDER");
         });
 
         modelBuilder.Entity<ClientDto>(entity =>
@@ -82,16 +82,12 @@ public partial class PsscDbContext : DbContext
         {
             entity.ToTable("DELIVERY");
 
-            entity.Property(e => e.DeliveryId)
-                .ValueGeneratedNever()
-                .HasColumnName("Delivery_ID");
+            entity.Property(e => e.DeliveryId).HasColumnName("Delivery_ID");
             entity.Property(e => e.Courier)
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.DeliveryDate).HasColumnType("datetime");
-            entity.Property(e => e.OrderId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("Order_ID");
+            entity.Property(e => e.OrderId).HasColumnName("Order_ID");
             entity.Property(e => e.TrackingNumber)
                 .HasMaxLength(100)
                 .IsUnicode(false);
@@ -102,47 +98,92 @@ public partial class PsscDbContext : DbContext
                 .HasConstraintName("FK_DELIVERY_ORDER");
         });
 
-        modelBuilder.Entity<OrderDto>(entity =>
+        modelBuilder.Entity<OrderItemDto>(entity =>
         {
-            entity.ToTable("ORDER");
+            entity.HasKey(e => e.OrderItemId); // Define the primary key
+            entity.ToTable("ORDER_ITEM");
 
-            entity.Property(e => e.OrderId)
-                .ValueGeneratedNever()
-                .HasColumnName("Order_ID");
-            entity.Property(e => e.ClientId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("Client_ID");
-            entity.Property(e => e.OrderDate).HasColumnType("datetime");
-            entity.Property(e => e.ShippingAddress)
-                .HasMaxLength(255)
+            entity.Property(e => e.OrderItemId)
+                .HasColumnName("OrderItem_ID")
+                .ValueGeneratedOnAdd();
+            entity.Property(e => e.ProductCode)
+                .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Price)
+                .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.OrderItemId) // Foreign key for OrderDto
+                .HasColumnName("Order_ID");
 
-            entity.HasOne(d => d.Client).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.ClientId)
+            // Define foreign key relationship to ProductDto
+            entity.HasOne<ProductDto>()
+                .WithMany(p => p.OrderItems)
+                .HasForeignKey(o => o.ProductCode) // Foreign key in OrderItemDto
+                .HasPrincipalKey(p => p.Code)     // Principal key in ProductDto
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ORDER_CLIENT");
+                .HasConstraintName("FK_ORDER_ITEM_PRODUCT");
+
+            // Define foreign key relationship to OrderDto
+            entity.HasOne<OrderDto>()
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(o => o.OrderItemId)  // Foreign key in OrderItemDto
+                .HasPrincipalKey(o => o.OrderId) // Principal key in OrderDto
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ORDER_ITEM_ORDER");
         });
 
+        // Configure ProductDto
         modelBuilder.Entity<ProductDto>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK_PRODUCT_1");
-
+            entity.HasKey(e => e.ProductId); // Define the primary key
             entity.ToTable("PRODUCT");
 
-            entity.HasIndex(e => e.Code, "Code").IsUnique();
-
-            entity.Property(e => e.ProductId).HasColumnName("Product_ID");
+            entity.Property(e => e.ProductId)
+                .HasColumnName("Product_ID");
             entity.Property(e => e.Code)
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Price)
+                .HasColumnType("decimal(10, 2)");
             entity.Property(e => e.QuantityType)
                 .HasMaxLength(30)
                 .IsUnicode(false);
+
+            // Define navigation property
+            entity.HasMany(p => p.OrderItems)
+                .WithOne()
+                .HasForeignKey(o => o.ProductCode)
+                .HasPrincipalKey(p => p.Code)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        // Configure OrderDto
+        modelBuilder.Entity<OrderDto>(entity =>
+        {
+            entity.HasKey(e => e.OrderId); // Define the primary key
+            entity.ToTable("ORDER");
+
+            entity.Property(e => e.OrderId)
+                .HasColumnName("Order_ID");
+            entity.Property(e => e.ClientEmail)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.OrderDate)
+                .HasColumnType("datetime");
+            entity.Property(e => e.ShippingAddress)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.TotalAmount)
+                .HasColumnType("decimal(10, 2)");
+
+            // Define navigation property
+            entity.HasMany(o => o.OrderItems)
+                .WithOne()
+                .HasForeignKey(oi => oi.OrderItemId)
+                .HasPrincipalKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<UserDto>(entity =>

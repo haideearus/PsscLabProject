@@ -11,8 +11,6 @@ public partial class OrderDto
     [Key]
     public int OrderId { get; set; }
 
-    public int ClientId { get; set; }
-
     public DateTime OrderDate { get; set; }
 
     public int PaymentMethod { get; set; }
@@ -22,6 +20,10 @@ public partial class OrderDto
     public string ShippingAddress { get; set; } = null!;
 
     public int? State { get; set; }
+
+    public string ClientEmail { get; set; } = null!;
+
+    public ICollection<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
 
     [JsonIgnore]
     public virtual ICollection<BillDto> Bills { get; set; } = new List<BillDto>();

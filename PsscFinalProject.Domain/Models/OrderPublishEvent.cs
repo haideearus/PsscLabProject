@@ -10,19 +10,19 @@ namespace PsscFinalProject.Domain.Models
         public interface IOrderPublishEvent { }
 
         // Represents the successful publishing of an order
-        public record OrderPublishSucceededEvent : IOrderPublishEvent
-        {
-            public string Csv { get; }
-            public DateTime PublishedDate { get; }
-            public IEnumerable<CalculatedOrderDetail> OrderDetails { get; }
 
-            internal OrderPublishSucceededEvent(string csv, IEnumerable<CalculatedOrderDetail> orderDetails, DateTime publishedDate)
+            public record OrderPublishSucceededEvent : IOrderPublishEvent
             {
-                Csv = csv;
-                PublishedDate = publishedDate;
-                OrderDetails = orderDetails;
+                public OrderPublishSucceededEvent(string csv, IEnumerable<CalculatedOrderDetail> orderDetails)
+                {
+                    Csv = csv ?? throw new ArgumentNullException(nameof(csv));
+                    OrderDetails = orderDetails?.ToList() ?? throw new ArgumentNullException(nameof(orderDetails));
+                }
+
+                public string Csv { get; }
+                public List<CalculatedOrderDetail> OrderDetails { get; } // Use concrete type to avoid ambiguity
             }
-        }
+
 
         // Represents the failure to publish an order
         public record OrderPublishFailedEvent : IOrderPublishEvent
@@ -44,13 +44,11 @@ namespace PsscFinalProject.Domain.Models
                 InvalidOrder invalidOrder => new OrderPublishFailedEvent(invalidOrder.Reasons),
                 CalculatedOrder calculatedOrder => new OrderPublishSucceededEvent(
                     "CSV Placeholder", // You can replace this with the actual CSV logic
-                    ConvertToCalculatedOrderDetails(calculatedOrder.ProductList),
-                    DateTime.Now // Assuming current date as published date
+                    ConvertToCalculatedOrderDetails(calculatedOrder.ProductList)
                 ),
                 PaidOrder paidOrder => new OrderPublishSucceededEvent(
                     paidOrder.Csv,
-                    ConvertToCalculatedOrderDetails(paidOrder.ProductList),
-                    paidOrder.PaidDate // Using PaidDate as PublishedDate
+                    ConvertToCalculatedOrderDetails(paidOrder.ProductList)
                 ),
                 _ => throw new NotImplementedException("Unrecognized order state")
             };
@@ -59,10 +57,9 @@ namespace PsscFinalProject.Domain.Models
         private static IEnumerable<CalculatedOrderDetail> ConvertToCalculatedOrderDetails(IEnumerable<CalculatedProduct> products)
         {
             return products.Select(product => new CalculatedOrderDetail(
-                product.ProductId,
-                product.Name,
-                product.Price,
-                product.Quantity,
+                product.ProductCode.Value,
+                product.ProductPrice.Value,
+                product.ProductQuantity.Value,
                 product.TotalPrice
             ));
         }
@@ -72,15 +69,13 @@ namespace PsscFinalProject.Domain.Models
     public record CalculatedOrderDetail
     {
         public string ProductId { get; }
-        public string ProductName { get; }
         public decimal Price { get; }
         public int Quantity { get; }
         public decimal TotalPrice { get; }
 
-        public CalculatedOrderDetail(string productId, string productName, decimal price, int quantity, decimal totalPrice)
+        public CalculatedOrderDetail(string productId, decimal price, int quantity, decimal totalPrice)
         {
             ProductId = productId;
-            ProductName = productName;
             Price = price;
             Quantity = quantity;
             TotalPrice = totalPrice;

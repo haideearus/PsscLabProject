@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Workflows;
-using static PsscFinalProject.Domain.Models.OrderPublishEvent;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using System.Linq;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+using static PsscFinalProject.Domain.Models.OrderPublishEvent;
 
 namespace PsscFinalProject.Api.Controllers
 {
@@ -23,64 +25,57 @@ namespace PsscFinalProject.Api.Controllers
         }
 
         /// <summary>
-        /// Publishes orders and returns the result.
+        /// Adds an order and triggers the workflow.
         /// </summary>
-        /// <param name="command">The command containing a collection of unvalidated orders to be processed.</param>
+        /// <param name="command">Order details.</param>
         /// <returns>
-        /// 200 - Orders successfully published
-        /// 400 - Invalid data or failed to publish orders
-        /// 500 - Server error
+        /// 200 - Order processed successfully.
+        /// 400 - Validation errors or workflow failure.
+        /// 500 - Internal server error.
         /// </returns>
-        [HttpPost("publish")]
-        public async Task<IActionResult> PublishOrder([FromBody] PublishOrderCommand command)
+        [HttpPost]
+        [Route("add")]
+        public async Task<IActionResult> AddOrder([FromBody] PublishOrderCommand command)
         {
             try
             {
-                // Check if the incoming command is valid
-                if (command == null || command.InputOrders == null || !command.InputOrders.Any())
+                // Validate the incoming command
+                if (command == null || command.ProductList == null || !command.ProductList.Any())
                 {
-                    _logger.LogWarning("Invalid order data provided.");
+                    _logger.LogWarning("Invalid order data received.");
                     return BadRequest("Invalid order data.");
                 }
 
-                // Validate the orders (e.g., using model validation)
-                foreach (var inputOrder in command.InputOrders)
-                {
-                    var validationResults = new List<ValidationResult>();
-                    var validationContext = new ValidationContext(inputOrder);
-                    if (!Validator.TryValidateObject(inputOrder, validationContext, validationResults, true))
-                    {
-                        var errorMessages = validationResults.Select(r => r.ErrorMessage).ToList();
-                        _logger.LogWarning("Validation failed for input order: {Errors}", string.Join(", ", errorMessages));
-                        return BadRequest(new { Errors = errorMessages });
-                    }
-                }
-
-                // Execute the workflow to process and publish the orders
+                // Execute the workflow
                 var result = await _workflow.ExecuteAsync(command);
 
-                // If the result is a failure event, return the error details
-                if (result is OrderPublishFailedEvent failedEvent)
+                // Check the result type
+                if (result is OrderPublishSucceededEvent successEvent)
                 {
-                    _logger.LogWarning("Order publishing failed: {Errors}", string.Join(", ", failedEvent.Reasons));
-                    return BadRequest(new { Errors = failedEvent.Reasons });
+                    return Ok(new
+                    {
+                        Message = "Order processed successfully.",
+                        Csv = successEvent.Csv,
+                        OrderDetails = successEvent.OrderDetails
+                    });
                 }
 
-                // Log success and return the result (success event)
-                _logger.LogInformation("Orders published successfully.");
-                return Ok(new
+                if (result is OrderPublishFailedEvent failedEvent)
                 {
-                    Message = "Orders published successfully.",
-                    Csv = ((OrderPublishSucceededEvent)result).Csv,
-                    PublishedDate = ((OrderPublishSucceededEvent)result).PublishedDate,
-                    OrderDetails = ((OrderPublishSucceededEvent)result).OrderDetails
-                });
+                    return BadRequest(new
+                    {
+                        Message = "Failed to process the order.",
+                        Errors = failedEvent.Reasons
+                    });
+                }
+
+                // Unexpected result type
+                return StatusCode(500, "Unexpected error occurred.");
             }
             catch (Exception ex)
             {
-                // Log the exception and return a generic server error response
-                _logger.LogError(ex, "An error occurred while publishing the order.");
-                return StatusCode(500, new { Message = "An error occurred while processing the request.", Details = ex.Message });
+                _logger.LogError(ex, "An error occurred while processing the order.");
+                return StatusCode(500, new { Message = "An error occurred.", Details = ex.Message });
             }
         }
     }

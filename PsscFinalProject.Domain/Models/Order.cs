@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("PsscFinalProject.Tests")]
+
 
 namespace PsscFinalProject.Domain.Models
 {
@@ -8,104 +11,111 @@ namespace PsscFinalProject.Domain.Models
         {
             public interface IOrder { }
 
-            // Represents the unvalidated state of the order
-            public record UnvalidatedOrder : IOrder
+        public record UnvalidatedOrder : IOrder
+        {
+            public UnvalidatedOrder(string clientEmail, IReadOnlyCollection<UnvalidatedProduct> productList)
             {
-                public UnvalidatedOrder(IReadOnlyCollection<UnvalidatedProduct> productList)
-                {
-                    ProductList = productList;
-                }
-
-                public IReadOnlyCollection<UnvalidatedProduct> ProductList { get; }
+                ClientEmail = clientEmail ?? throw new ArgumentNullException(nameof(clientEmail));
+                ProductList = productList ?? throw new ArgumentNullException(nameof(productList));
             }
 
-            // Represents the invalid state of the order (if validation failed)
-            public record InvalidOrder : IOrder
-            {
-                internal InvalidOrder(IReadOnlyCollection<UnvalidatedProduct> productList, IEnumerable<string> reasons)
-                {
-                    ProductList = productList;
-                    Reasons = reasons;
-                }
+            public IReadOnlyCollection<UnvalidatedProduct> ProductList { get; }
+            public string ClientEmail { get; set; }
+        }
 
-                public IReadOnlyCollection<UnvalidatedProduct> ProductList { get; }
-                public IEnumerable<string> Reasons { get; }
+
+        public record InvalidOrder : IOrder
+        {
+            internal InvalidOrder(IReadOnlyCollection<UnvalidatedProduct> productList, IEnumerable<string> reasons)
+            {
+                ProductList = productList ?? throw new ArgumentNullException(nameof(productList));
+                Reasons = reasons ?? throw new ArgumentNullException(nameof(reasons));
             }
 
-            // Represents the validated state of the order (after successful validation)
-            public record ValidatedOrder : IOrder
-            {
-                internal ValidatedOrder(IReadOnlyCollection<ValidatedProduct> productList)
-                {
-                    ProductList = productList;
-                }
+            public IReadOnlyCollection<UnvalidatedProduct> ProductList { get; }
+            public IEnumerable<string> Reasons { get; }
+        }
 
-                public IReadOnlyCollection<ValidatedProduct> ProductList { get; }
+        public record ValidatedOrder : IOrder
+        {
+            internal ValidatedOrder(ClientEmail clientEmail, IReadOnlyCollection<ValidatedProduct> productList)
+            {
+                Email = clientEmail ?? throw new ArgumentNullException(nameof(clientEmail));
+                ProductList = productList ?? throw new ArgumentNullException(nameof(productList));
             }
 
-        // Represents the calculated state of the order (with totals calculated for each product)
+            public IReadOnlyCollection<ValidatedProduct> ProductList { get; }
+            public ClientEmail Email { get; set; }
+        }
+
         public record CalculatedOrder : IOrder
         {
             public CalculatedOrder(
                 IReadOnlyCollection<CalculatedProduct> productList,
-                int orderId,
                 DateTime orderDate,
                 int paymentMethod,
                 decimal totalAmount,
                 string shippingAddress,
                 int? state,
-                ClientEmail clientEmail
-            )
+                ClientEmail clientEmail)
             {
-                ProductList = productList;
-                OrderId = orderId;
+                ProductList = productList ?? throw new ArgumentNullException(nameof(productList));
                 OrderDate = orderDate;
                 PaymentMethod = paymentMethod;
                 TotalAmount = totalAmount;
-                ShippingAddress = shippingAddress;
+                ShippingAddress = shippingAddress ?? throw new ArgumentNullException(nameof(shippingAddress));
                 State = state;
-                ClientEmail = clientEmail;
-            }
-
-            public IReadOnlyCollection<CalculatedProduct> ProductList { get; set; }
-            public int OrderId { get; set; }
-            public DateTime OrderDate { get; set; }
-            public int PaymentMethod { get; set; }
-            public decimal TotalAmount { get; set; }
-            public string ShippingAddress { get; set; }
-            public int? State { get; set; }
-            public ClientEmail ClientEmail { get; set; }
-        }
-
-
-        // Represents the paid state of the order (after payment has been processed)
-        public record PaidOrder : IOrder
-        {
-            internal PaidOrder(IReadOnlyCollection<CalculatedProduct> productList, string csv, DateTime paidDate)
-            {
-                ProductList = productList;
-                PaidDate = paidDate;
-                Csv = csv;
+                ClientEmail = clientEmail ?? throw new ArgumentNullException(nameof(clientEmail));
             }
 
             public IReadOnlyCollection<CalculatedProduct> ProductList { get; }
-            public DateTime PaidDate { get; }
-            public string Csv { get; }
+            public DateTime OrderDate { get; }
+            public int PaymentMethod { get; }
+            public decimal TotalAmount { get; }
+            public string ShippingAddress { get; }
+            public int? State { get; }
+            public ClientEmail ClientEmail { get; }
         }
 
-        // The base structures for product details used in the order
+        public record PaidOrder : IOrder
+        {
+            public PaidOrder(
+                ClientEmail clientEmail,
+                IReadOnlyCollection<CalculatedProduct> productList,
+                string csv,
+                DateTime orderDate,
+                int paymentMethod,
+                decimal totalAmount,
+                string shippingAddress,
+                int? state = null,
+                int? orderId = null)
+            {
+                ClientEmail = clientEmail ?? throw new ArgumentNullException(nameof(clientEmail));
+                ProductList = productList ?? throw new ArgumentNullException(nameof(productList));
+                Csv = csv ?? throw new ArgumentNullException(nameof(csv));
+                OrderDate = orderDate;
+                PaymentMethod = paymentMethod;
+                TotalAmount = totalAmount;
+                ShippingAddress = shippingAddress ?? throw new ArgumentNullException(nameof(shippingAddress));
+                State = state;
+                OrderId = orderId;
+            }
 
-        // Represents a product in the unvalidated order (before any validation)
-        public record UnvalidatedProduct(string Code, string Name, decimal Price, int Quantity);
+            public ClientEmail ClientEmail { get; }
+            public IReadOnlyCollection<CalculatedProduct> ProductList { get; }
+            public string Csv { get; }
+            public DateTime OrderDate { get; }
+            public int PaymentMethod { get; }
+            public decimal TotalAmount { get; }
+            public string ShippingAddress { get; }
+            public int? State { get; }
+            public int? OrderId { get; } // Nullable OrderId for tracking
+        }
 
-        // Represents a product in the validated order (after passing validation)
-        public record ValidatedProduct(string ProductId, string Name, decimal Price, int Quantity);
-
-            // Represents a product in the calculated order (after calculations like price totals are done)
-            public record CalculatedProduct(string ProductId, string Name, decimal Price, int Quantity, decimal TotalPrice)
+        public record CalculatedProduct(ProductName ProductName, ProductCode ProductCode, ProductPrice ProductPrice, ProductQuantityType ProductQuantityType ,ProductQuantity ProductQuantity, decimal TotalPrice)
             {
                 public int ProductDetailId { get; set; }
                 public bool IsUpdated { get; set; }
             }
         }
-    }
+}

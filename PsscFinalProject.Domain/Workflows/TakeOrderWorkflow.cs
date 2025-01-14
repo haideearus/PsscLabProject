@@ -6,26 +6,29 @@ using PsscFinalProject.Domain.Repositories;
 using static PsscFinalProject.Domain.Models.Order;
 using static PsscFinalProject.Domain.Models.OrderPublishEvent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System;
-using System.Linq;
 
 public class PublishOrderWorkflow
 {
     private readonly IClientRepository clientRepository;
     private readonly IOrderRepository orderRepository;
     private readonly IProductRepository productRepository;
+    private readonly IOrderItemRepository orderItemRepository;
     private readonly ILogger<PublishOrderWorkflow> logger;
 
     public PublishOrderWorkflow(
         IClientRepository clientRepository,
         IOrderRepository orderRepository,
         IProductRepository productRepository,
+        IOrderItemRepository orderItemRepository,
         ILogger<PublishOrderWorkflow> logger)
     {
         this.clientRepository = clientRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.orderItemRepository = orderItemRepository;
         this.logger = logger;
     }
 
@@ -33,82 +36,107 @@ public class PublishOrderWorkflow
     {
         try
         {
-            // Load existing data
-            IEnumerable<string> productCodesToCheck = command.InputOrders.SelectMany(order => order.ProductList.Select(product => product.Code));
-            List<ProductCode> existingProducts = await productRepository.GetExistingProductsAsync(productCodesToCheck);
+            // Step 1: Validate client association
+            var clientEmail = command.ClientEmail;
+            var clientExists = await clientRepository.ClientExistsAsync(clientEmail);
 
-            // Get existing clients from the repository
-            IEnumerable<string> clientEmailsToCheck = command.InputOrders.Select(order => order.ProductList.First().Code); // Assuming first product has the client info
-            List<ClientEmail> existingClients = await clientRepository.GetExistingClientsAsync(clientEmailsToCheck);
-
-            // Execute business logic on each order
-            List<IOrderPublishEvent> events = new List<IOrderPublishEvent>();
-            foreach (var order in command.InputOrders)
+            if (!clientExists)
             {
-                // Null check for order
-                if (order == null)
-                {
-                    throw new ArgumentNullException(nameof(order), "Order cannot be null");
-                }
-
-                // Modifică aici, instanțiezi corect ValidateOrderOperation
-                var validateOrderOperation = new ValidateOrderOperation(productRepository);
-
-                IOrder orderState = ExecuteBusinessLogic(order, existingProducts, existingClients, validateOrderOperation);
-
-                // Save the final state of the order
-                if (orderState is PaidOrder paidOrder)
-                {
-                    await orderRepository.SaveOrdersAsync(paidOrder);
-                }
-
-                // Generate event based on the order state
-                IOrderPublishEvent orderEvent = orderState.ToEvent();
-                events.Add(orderEvent);
+                logger.LogWarning("Client not found: {ClientEmail}", clientEmail);
+                return new OrderPublishFailedEvent(new List<string> { $"Client with email {clientEmail} does not exist." });
             }
 
-            // Return the appropriate event(s)
-            return events.Count == 1 ? events.First() : new OrderPublishFailedEvent(new List<string> { "Multiple orders failed or no valid order found." });
+            // Step 2: Validate product codes in the order
+            var productCodes = command.ProductList.Select(p => p.ProductCode).Distinct();
+            var existingProducts = await productRepository.GetExistingProductsAsync(productCodes);
+
+            var missingProductCodes = productCodes.Except(existingProducts.Select(p => p.Value)).ToList();
+            if (missingProductCodes.Any())
+            {
+                logger.LogWarning("Products not found: {ProductCodes}", string.Join(", ", missingProductCodes));
+                return new OrderPublishFailedEvent(new List<string> { $"Products not found: {string.Join(", ", missingProductCodes)}" });
+            }
+
+            // Step 3: Validate the order
+            var validateOrderOperation = new ValidateOrderOperation(productRepository);
+            var unvalidatedOrder = new UnvalidatedOrder(clientEmail, command.ProductList);
+            var validatedOrder = validateOrderOperation.Transform(unvalidatedOrder);
+
+            if (validatedOrder is InvalidOrder invalidOrder)
+            {
+                logger.LogWarning("Order validation failed: {Reasons}", string.Join(", ", invalidOrder.Reasons));
+                return new OrderPublishFailedEvent(invalidOrder.Reasons.ToList());
+            }
+
+            // Step 4: Calculate total price and prepare the order
+            var calculateOrderOperation = new CalculateOrderOperation();
+            var calculatedOrder = calculateOrderOperation.Transform((ValidatedOrder)validatedOrder);
+
+            if (calculatedOrder is not CalculatedOrder finalOrder)
+            {
+                logger.LogError("Order calculation failed.");
+                return new OrderPublishFailedEvent(new List<string> { "Failed to calculate the order." });
+            }
+
+            // Step 5: Save the order to the database
+            // Step 5: Save the order to the database
+            var paidOrder = new PaidOrder(
+                finalOrder.ClientEmail,
+                finalOrder.ProductList,
+                GenerateCsv(finalOrder),
+                command.OrderDate,                  // Pass order date from PublishOrderCommand
+                command.PaymentMethod,              // Pass payment method from PublishOrderCommand
+                command.TotalAmount,                // Pass total amount from PublishOrderCommand
+                command.ShippingAddress ?? string.Empty, // Pass shipping address or a default value
+                command.State,                      // Pass state from PublishOrderCommand
+                null                                // Optional OrderId, null at this stage
+            );
+            await orderRepository.SaveOrdersAsync(paidOrder);
+
+
+            // Step 5a: Add order items to the database
+            if (paidOrder.OrderId.HasValue)
+            {
+                foreach (var product in finalOrder.ProductList)
+                {
+                    await orderItemRepository.AddOrderItemAsync(paidOrder.OrderId.Value, product.ProductCode.Value, product.ProductPrice.Value);
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("OrderId is required to save order items.");
+            }
+
+            // Step 6: Publish the success event
+            logger.LogInformation("Order published successfully: {OrderId}", paidOrder.ProductList.FirstOrDefault()?.ProductDetailId ?? 0);
+            return new OrderPublishSucceededEvent(
+                csv: GenerateCsv(finalOrder),
+                orderDetails: finalOrder.ProductList.Select(p => new CalculatedOrderDetail(
+                    p.ProductCode.Value,
+                    p.ProductPrice.Value,
+                    p.ProductQuantity.Value,
+                    p.TotalPrice
+                )).ToList()
+            );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while publishing orders");
-            return new OrderPublishFailedEvent(new List<string> { "Unexpected error" });
+            logger.LogError(ex, "An error occurred while processing the order workflow.");
+            return new OrderPublishFailedEvent(new List<string> { "Unexpected error occurred.", ex.Message });
         }
     }
 
-    private IOrder ExecuteBusinessLogic(
-        UnvalidatedOrder unvalidatedOrder,
-        List<ProductCode> existingProducts,
-        List<ClientEmail> existingClients,
-        ValidateOrderOperation validateOrderOperation)
+    private string GenerateCsv(CalculatedOrder order)
     {
-        // Validate the order
-        IOrder validatedOrder = validateOrderOperation.Transform(unvalidatedOrder);
-
-        // If the order is valid, calculate its totals
-        if (validatedOrder is ValidatedOrder validOrder)
+        // Generate CSV from the order details
+        var csvLines = new List<string>
         {
-            var calculateOrderOperation = new CalculateOrderOperation();
-            IOrder calculatedOrder = calculateOrderOperation.Transform(validOrder, existingProducts);
+            "ProductName,ProductCode,Price,Quantity,TotalPrice"
+        };
 
-            // Initialize PublishOrderOperation
-            var publishOrderOperation = new PublishOrderOperation();
+        csvLines.AddRange(order.ProductList.Select(product =>
+            $"{product.ProductName.Value},{product.ProductCode.Value},{product.ProductPrice.Value:F2},{product.ProductQuantity.Value},{product.TotalPrice:F2}"));
 
-            if (calculatedOrder is CalculatedOrder calculated)
-            {
-                return publishOrderOperation.Transform(calculated);
-            }
-            throw new InvalidOperationException("calculatedOrder is not a CalculatedOrder");
-        }
-
-        // If the order is invalid, return an invalid order state
-        if (validatedOrder is InvalidOrder invalidOrder)
-        {
-            return invalidOrder; // No further processing needed, it is a failure
-        }
-
-        // Return the validated order if nothing else applies
-        return validatedOrder;
+        return string.Join(Environment.NewLine, csvLines);
     }
 }

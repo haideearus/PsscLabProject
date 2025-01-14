@@ -22,6 +22,10 @@ namespace PsscFinalProject.Domain.Models
             }
         }
 
+        public static ClientEmail Create(string value)
+        {
+            return new ClientEmail(value);
+        }
         private static bool IsValid(string stringValue)
         {
             var regex = new Regex(Pattern); 

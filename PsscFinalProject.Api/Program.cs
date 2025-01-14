@@ -22,13 +22,11 @@ namespace PsscFinalProject.Api
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Register repositories with the DI container
-            builder.Services.AddTransient<IOrderRepository, OrderRepository>(); // Register OrderRepository
-            builder.Services.AddTransient<IClientRepository, ClientRepository>(); // Register ClientRepository
-            builder.Services.AddTransient<IProductRepository, ProductRepository>(); // Register ProductRepository
-
-            // Register workflows
-            //builder.Services.AddTransient<TakeOrderWorkflow>(); // Example workflow registration
-            builder.Services.AddTransient<PublishOrderWorkflow>(); // Another workflow
+            builder.Services.AddScoped<PublishOrderWorkflow>();
+            builder.Services.AddScoped<IClientRepository, ClientRepository>();
+            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();

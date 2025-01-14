@@ -16,6 +16,14 @@ namespace PsscFinalProject.Data.Repositories
         {
             this.dbContext = dbContext;
         }
+        public async Task<bool> ClientExistsAsync(string email)
+        {
+            return await dbContext.Clients.AsNoTracking().AnyAsync(c => c.Email == email);
+        }
+        //public Task<bool> ClientExistsAsync(string clientEmail)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public async Task<List<ClientEmail>> GetExistingClientsAsync(IEnumerable<string> clientsToCheck)
         {

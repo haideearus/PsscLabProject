@@ -20,6 +20,12 @@ namespace PsscFinalProject.Domain.Models
                 throw new InvalidProductCodeException("Invalid product code format.");
             }
         }
+
+        public static ProductCode Create(string value)
+        {
+            return new ProductCode(value);
+        }
+
         private static bool IsValid(string stringValue)
         {
             var regex = new Regex(Pattern);
