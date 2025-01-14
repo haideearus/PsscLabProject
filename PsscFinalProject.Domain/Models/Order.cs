@@ -96,10 +96,10 @@ namespace PsscFinalProject.Domain.Models
         // The base structures for product details used in the order
 
         // Represents a product in the unvalidated order (before any validation)
-        public record UnvalidatedProduct(string ProductId, string Name, decimal Price, int Quantity);
+        public record UnvalidatedProduct(string Code, string Name, decimal Price, int Quantity);
 
-            // Represents a product in the validated order (after passing validation)
-            public record ValidatedProduct(string ProductId, string Name, decimal Price, int Quantity);
+        // Represents a product in the validated order (after passing validation)
+        public record ValidatedProduct(string ProductId, string Name, decimal Price, int Quantity);
 
             // Represents a product in the calculated order (after calculations like price totals are done)
             public record CalculatedProduct(string ProductId, string Name, decimal Price, int Quantity, decimal TotalPrice)
