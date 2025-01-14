@@ -22,21 +22,26 @@ namespace PsscFinalProject.Api.Models
         }
     }
 
-
     public class InputProduct
     {
+        [Required]
+        public int ProductId { get; set; } 
 
         [Required]
-        [RegularExpression(ProductCode.Pattern, ErrorMessage = "Invalid product code format.")]
-        public string ProductId { get; set; }
+        public string Name { get; set; }
+
+        [Required]
+        public decimal Price { get; set; }
 
         [Required]
         [Range(1, 1000, ErrorMessage = "Quantity must be between 1 and 1000.")]
         public int Quantity { get; set; }
 
-        public InputProduct(string productId, int quantity)
+        public InputProduct(int productId, string name, decimal price, int quantity)
         {
-            ProductId = productId ?? throw new ArgumentNullException(nameof(productId), "ProductId cannot be null");
+            ProductId = productId;
+            Name = name ?? throw new ArgumentNullException(nameof(name), "Name cannot be null");
+            Price = price;
             Quantity = quantity;
         }
     }

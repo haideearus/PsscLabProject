@@ -30,7 +30,9 @@ public class ProductsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProduct(int id)
     {
-        var product = await _context.Products.FindAsync(id); // Ensure "Products" exists in DbContext
+
+        var product = await _context.Products.FindAsync(id);
+        
         if (product == null)
         {
             return NotFound();

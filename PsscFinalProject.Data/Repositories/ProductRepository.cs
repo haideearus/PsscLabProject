@@ -19,15 +19,12 @@ namespace PsscFinalProject.Data.Repositories
 
         public async Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck)
         {
-            // Fetch products based on the provided product codes
             List<ProductDto> products = await dbContext.Products
                 .Where(product => productCodesToCheck.Contains(product.Code))
                 .AsNoTracking()
                 .ToListAsync();
 
-            // Map the fetched products to domain models (ProductCode)
-            return products.Select(product => new ProductCode(product.Code))
-                           .ToList();
+            return products.Select(product => new ProductCode(product.Code)).ToList();
         }
     }
 }
