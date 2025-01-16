@@ -29,7 +29,10 @@
         private void InitializeComponent()
         {
             this.label1 = new System.Windows.Forms.Label();
-            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.pssC_DataBaseDataSet1 = new UI.PSSC_DataBaseDataSet();
+            this.dataGridViewProducts = new System.Windows.Forms.DataGridView();
+            ((System.ComponentModel.ISupportInitialize)(this.pssC_DataBaseDataSet1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewProducts)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -46,24 +49,33 @@
             this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
-            // listBox1
+            // pssC_DataBaseDataSet1
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 20;
-            this.listBox1.Location = new System.Drawing.Point(12, 101);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(776, 324);
-            this.listBox1.TabIndex = 1;
+            this.pssC_DataBaseDataSet1.DataSetName = "PSSC_DataBaseDataSet";
+            this.pssC_DataBaseDataSet1.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
+            // 
+            // dataGridViewProducts
+            // 
+            this.dataGridViewProducts.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewProducts.Location = new System.Drawing.Point(12, 101);
+            this.dataGridViewProducts.Name = "dataGridViewProducts";
+            this.dataGridViewProducts.RowHeadersWidth = 62;
+            this.dataGridViewProducts.RowTemplate.Height = 28;
+            this.dataGridViewProducts.Size = new System.Drawing.Size(776, 337);
+            this.dataGridViewProducts.TabIndex = 1;
             // 
             // Shop
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.listBox1);
+            this.Controls.Add(this.dataGridViewProducts);
             this.Controls.Add(this.label1);
             this.Name = "Shop";
             this.Text = "Shop";
+            this.Load += new System.EventHandler(this.Shop_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.pssC_DataBaseDataSet1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewProducts)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -71,6 +83,7 @@
         #endregion
 
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ListBox listBox1;
+        private PSSC_DataBaseDataSet pssC_DataBaseDataSet1;
+        private System.Windows.Forms.DataGridView dataGridViewProducts;
     }
 }
