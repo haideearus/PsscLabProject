@@ -6,7 +6,9 @@ namespace PsscFinalProject.Domain.Repositories
 {
     public interface IProductRepository
     {
+        Task<List<ValidatedProduct>> GetProductsByCodesAsync(IEnumerable<string> productCodes);
 
-        Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productsToCheck);
+        //Task<List<ValidatedProduct>> GetProductsByCodesAsync(IEnumerable<string> productCodes); // Fetch product details
+        Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck); // Validate product codes
     }
 }

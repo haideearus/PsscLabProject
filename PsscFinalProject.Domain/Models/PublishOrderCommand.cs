@@ -27,7 +27,7 @@ namespace PsscFinalProject.Domain.Models
     public class PublishOrderCommand
     {
         public string ClientEmail { get; set; } = string.Empty;
-        public DateTime OrderDate { get; set; } // Required order date
+       public DateTime OrderDate { get; set; } // Required order date
         public int PaymentMethod { get; set; }  // Payment method
         public decimal TotalAmount { get; set; } // Total amount of the order
         public string? ShippingAddress { get; set; } // Nullable shipping address

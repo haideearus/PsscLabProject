@@ -18,7 +18,7 @@ namespace PsscFinalProject.Tests.Tests
         [Test]
         public void TestCalculateOrderOperation()
         {
-            var mockLogger = new Mock<ILogger<CalculateOrderOperation>>();
+            //var mockLogger = new Mock<ILogger<CalculateOrderOperation>>();
             var operation = new CalculateOrderOperation();
 
             var productList = new List<ValidatedProduct>
@@ -47,6 +47,35 @@ namespace PsscFinalProject.Tests.Tests
             Assert.That(((CalculatedOrder)result).TotalAmount, Is.EqualTo(14.94M));
         }
 
+        [Test]
+        public void OnValidated_ShouldCreateCalculatedOrderWithCorrectProperties()
+        {
+            // Arrange
+            var validatedOrder = new ValidatedOrder(
+                new ClientEmail("test@example.com"),
+                new List<ValidatedProduct>
+                {
+            new ValidatedProduct(new ProductName("ProductA"), new ProductCode("PRD001"), new ProductPrice(10m), new ProductQuantityType("Unit"), new ProductQuantity(2)),
+            new ValidatedProduct(new ProductName("ProductB"), new ProductCode("PRD002"), new ProductPrice(20m), new ProductQuantityType("Unit"), new ProductQuantity(1))
+                }
+            );
+
+            var operation = new CalculateOrderOperation();
+
+            // Act
+            var result = operation.Transform(validatedOrder);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<CalculatedOrder>(), "The result should be a CalculatedOrder.");
+            var calculatedOrder = (CalculatedOrder)result;
+
+            Assert.That(calculatedOrder.TotalAmount, Is.EqualTo(40m), "Total amount should match the expected value.");
+            Assert.That(calculatedOrder.ShippingAddress, Is.EqualTo("Default Address"), "Shipping address should be the default value.");
+            Assert.That(calculatedOrder.PaymentMethod, Is.EqualTo(1), "Payment method should be the default value.");
+            Assert.That(calculatedOrder.State, Is.EqualTo(1), "Order state should be 'Placed'.");
+            Assert.That(calculatedOrder.ClientEmail.Value, Is.EqualTo("test@example.com"), "Client email should match.");
+
+        }
 
     }
 }

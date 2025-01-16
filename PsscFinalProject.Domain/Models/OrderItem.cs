@@ -11,12 +11,14 @@ namespace PsscFinalProject.Domain.Models
         public int OrderId { get; }
         public string ProductCode { get; }
         public decimal Price { get; }
+        public int  Quantity { get; }
 
-        public OrderItem(int orderId, string productCode, decimal price)
+        public OrderItem(int orderId, string productCode, decimal price, int quantity)
         {
             OrderId = orderId;
             ProductCode = productCode;
             Price = price;
+            Quantity = quantity;
         }
     }
 }

@@ -7,9 +7,9 @@ using System.Runtime.CompilerServices;
 
 namespace PsscFinalProject.Domain.Models
 {
-        public static class Order
-        {
-            public interface IOrder { }
+    public static class Order
+    {
+        public interface IOrder { }
 
         public record UnvalidatedOrder : IOrder
         {
@@ -112,10 +112,16 @@ namespace PsscFinalProject.Domain.Models
             public int? OrderId { get; } // Nullable OrderId for tracking
         }
 
-        public record CalculatedProduct(ProductName ProductName, ProductCode ProductCode, ProductPrice ProductPrice, ProductQuantityType ProductQuantityType ,ProductQuantity ProductQuantity, decimal TotalPrice)
-            {
-                public int ProductDetailId { get; set; }
-                public bool IsUpdated { get; set; }
-            }
+        public record CalculatedProduct(
+             ProductName ProductName,
+             ProductCode ProductCode,
+             ProductPrice ProductPrice,
+             ProductQuantityType ProductQuantityType,
+             ProductQuantity ProductQuantity,
+             decimal TotalPrice)
+        {
+            public int ProductDetailId { get; init; }
+            public bool IsUpdated { get; init; }
         }
+    }
 }

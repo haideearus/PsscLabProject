@@ -22,6 +22,38 @@ namespace PsscFinalProject.Data.Repositories
             var orderItems = await dbContext.OrderItems.AsNoTracking().ToListAsync();
             return orderItems.Select(dto => MapToDomain(dto)).ToList();
         }
+        public async Task AddOrderItemsAsync(IEnumerable<OrderItem> orderItems)
+        {
+            var orderItemDtos = orderItems.Select(oi => new OrderItemDto
+            {
+                OrderItemId = oi.OrderId,
+                ProductCode = oi.ProductCode,
+                Price = oi.Price,
+                Quantity = oi.Quantity
+            }).ToList();
+
+            dbContext.OrderItems.AddRange(orderItemDtos);
+            await dbContext.SaveChangesAsync();
+        }
+        public async Task AddOrderItemsAsync1(IEnumerable<OrderItem> orderItems)
+        {
+            var orderItemDtos = orderItems.Select(oi => new OrderItemDto
+            {
+                OrderItemId = oi.OrderId,
+                ProductCode = oi.ProductCode,
+                Price = oi.Price,
+                Quantity = oi.Quantity
+            }).ToList();
+
+            dbContext.OrderItems.AddRange(orderItemDtos);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task AddOrderItemsAsync(IEnumerable<OrderItemDto> orderItems)
+        {
+            dbContext.OrderItems.AddRange(orderItems);
+            await dbContext.SaveChangesAsync();
+        }
 
         public async Task SaveOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems)
         {
@@ -67,6 +99,17 @@ namespace PsscFinalProject.Data.Repositories
             await dbContext.SaveChangesAsync();
         }
 
+        //public async Task AddOrderItemsAsync(IEnumerable<OrderItemDto> orderItems)
+        //{
+        //    dbContext.OrderItems.AddRange(orderItems);
+        //    await dbContext.SaveChangesAsync();
+        //}
+
+        public interface IOrderItemService
+        {
+            Task AddOrderItemsAsync(IEnumerable<OrderItem> orderItems);
+        }
+
 
         public async Task AddOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems)
         {
@@ -95,5 +138,6 @@ namespace PsscFinalProject.Data.Repositories
                 Price = domain.ProductPrice.Value
             };
         }
+
     }
 }

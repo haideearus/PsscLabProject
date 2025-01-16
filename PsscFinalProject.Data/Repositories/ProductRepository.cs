@@ -17,9 +17,24 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
+        public async Task<List<ValidatedProduct>> GetProductsByCodesAsync(IEnumerable<string> productCodes)
+        {
+            var products = await dbContext.Products
+                .Where(p => productCodes.Contains(p.Code))
+                .AsNoTracking()
+                .ToListAsync();
+
+            return products.Select(p => new ValidatedProduct(
+                ProductName.Create(p.Name),
+                ProductCode.Create(p.Code),
+                ProductPrice.Create(p.Price),
+                ProductQuantityType.Create(p.QuantityType),
+                ProductQuantity.Create(1) // Default quantity
+            )).ToList();
+        }
         public async Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck)
         {
-            List<ProductDto> products = await dbContext.Products
+            var products = await dbContext.Products
                 .Where(product => productCodesToCheck.Contains(product.Code))
                 .AsNoTracking()
                 .ToListAsync();

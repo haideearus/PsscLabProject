@@ -9,10 +9,12 @@ namespace PsscFinalProject.Domain.Repositories
 {
     public interface IOrderItemRepository
     {
-            Task<List<ValidatedProduct>> GetOrderItemsAsync();
-            Task SaveOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems);
+            Task AddOrderItemsAsync(IEnumerable<OrderItem> orderItems);
+        Task AddOrderItemsAsync1(IEnumerable<OrderItem> orderItems);
+        Task SaveOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems);
             Task DeleteOrderItemAsync(int orderItemId);
             Task AddOrderItemAsync(int orderId, string productCode, decimal price);
             Task AddOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems);
+     
     }
 }
