@@ -1,19 +1,18 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-//namespace PsscFinalProject.Domain.Models
-//{
-//    namespace PsscFinalProject.Domain.Models
-//    {
-//        public class User
-//        {
-//            public string? UserName { get; set; }
-//            public string? Email { get; set; }
-//            public string?  Password { get; set; }
-//        }
-//    }
-
-//}
+namespace PsscFinalProject.Domain.Models
+{
+    namespace PsscFinalProject.Domain.Models
+    {
+        public class User
+        {
+            public string? UserName { get; set; }
+            public string? Email { get; set; }
+            public string? Password { get; set; }
+        }
+    }
+}

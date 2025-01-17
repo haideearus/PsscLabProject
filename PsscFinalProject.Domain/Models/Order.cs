@@ -4,7 +4,11 @@ using System.Linq;
 
 namespace PsscFinalProject.Domain.Models
 {
-        public static class Order
+    public class Order
+    {
+        public interface IOrder { }
+
+        public record UnvalidatedOrder : IOrder
         {
             public interface IOrder { }
 
