@@ -12,5 +12,12 @@
 		<PackageReference Include="Microsoft.OpenApi" Version="1.6.23" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Service\" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\PsscFinalProject.Api\PsscFinalProject.Api.csproj" />
+		<ProjectReference Include="..\PsscFinalProject.Data\PsscFinalProject.Data.csproj" />
+	</ItemGroup>
 
 </Project>

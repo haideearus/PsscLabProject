@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PsscFinalProject.Api;
 
 namespace PsscFinalProject.Domain.Workflows
 {
-    internal class DeliverOrderWorkflow
+    public class DeliverOrderWorkflow
     {
-        private readonly ApiService _apiService;
+        private readonly ApiServiceDelivery _apiService;
+        public DeliveryWorkflowService(IApiService apiService)
+        {
+            _apiService = apiService;
+        }
     }
     public async Task ProcessOrderAsync(int orderId)
         {
