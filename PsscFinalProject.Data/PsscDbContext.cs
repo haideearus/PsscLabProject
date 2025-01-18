@@ -101,13 +101,27 @@ public partial class PsscDbContext : DbContext
         modelBuilder.Entity<OrderItemDto>(entity =>
         {
             entity.ToTable("ORDERITEM");
-            entity.Property(e => e.OrderItemId).HasColumnName("OrderItem_Id");
+
+            entity.HasKey(e => e.Nr_crt); // Define primary key
+
+            entity.Property(e => e.Nr_crt)
+                  .HasColumnName("NR_CRT")
+                  .ValueGeneratedOnAdd(); // Ensure it's auto-incremented
+
+            entity.Property(e => e.OrderItemId)
+                  .HasColumnName("OrderItem_Id");
+
+            entity.Property(e => e.ProductCode)
+                  .HasColumnName("ProductCode");
+
             entity.Property(e => e.Price)
                   .HasColumnName("Price")
                   .HasColumnType("decimal(10, 2)"); // Define precision
-            entity.Property(e => e.ProductCode).HasColumnName("ProductCode");
-            entity.Property(e => e.Quantity).HasColumnName("Quantity");
+
+            entity.Property(e => e.Quantity)
+                  .HasColumnName("Quantity");
         });
+
 
         // Configure ProductDto
         modelBuilder.Entity<ProductDto>(entity =>

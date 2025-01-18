@@ -51,6 +51,7 @@ namespace PsscFinalProject.Data.Repositories
 
         public async Task SaveOrdersAsync(PaidOrderProducts paidOrder)
         {
+            // Create and add the order
             var order = new OrderDto
             {
                 OrderDate = paidOrder.OrderDate,
@@ -64,7 +65,7 @@ namespace PsscFinalProject.Data.Repositories
             dbContext.Orders.Add(order);
 
             // Save changes to get the generated Order_ID
-           await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
 
             // Retrieve the generated Order_ID
             int generatedOrderId = order.OrderId;
@@ -72,17 +73,20 @@ namespace PsscFinalProject.Data.Repositories
             // Add the order items with the generated Order_ID
             foreach (var product in paidOrder.ProductList)
             {
+                // Ensure each OrderItemDto has a unique OrderItemId
                 var orderItem = new OrderItemDto
                 {
-                    OrderItemId =generatedOrderId , // Use the generated Order_ID
+                    OrderItemId = generatedOrderId, // Associate with the generated order
                     ProductCode = product.productCode.Value,
                     Quantity = product.productQuantity.Value,
                     Price = product.productPrice.Value
                 };
-                dbContext.OrderItems.Add(orderItem);
+
+                // Detach the entity after adding it to the context
+                dbContext.Entry(orderItem).State = EntityState.Added;
             }
 
-            // Save the order items
+            // Save all order items in one operation
             await dbContext.SaveChangesAsync();
         }
     }
