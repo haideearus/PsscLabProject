@@ -46,10 +46,10 @@ public partial class PsscDbContext : DbContext
             entity.Property(e => e.OrderId).HasColumnName("Order_ID");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.Bills)
-                .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_BILLS_ORDER");
+            //entity.HasOne(d => d.Order).WithMany(p => p.Bills)
+            //    .HasForeignKey(d => d.OrderId)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_BILLS_ORDER");
         });
 
         modelBuilder.Entity<ClientDto>(entity =>
@@ -92,10 +92,10 @@ public partial class PsscDbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
 
-            entity.HasOne(d => d.Order).WithMany(p => p.Deliveries)
-                .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_DELIVERY_ORDER");
+            //entity.HasOne(d => d.Order).WithMany(p => p.Deliveries)
+            //    .HasForeignKey(d => d.OrderId)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_DELIVERY_ORDER");
         });
 
         modelBuilder.Entity<OrderItemDto>(entity =>

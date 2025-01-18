@@ -18,5 +18,5 @@ public partial class OrderItemDto
 
     public int Quantity { get; set; }
 
-    public OrderDto Order { get; set; }
+    //public OrderDto Order { get; set; }
 }

@@ -6,6 +6,7 @@ using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
 using PsscFinalProject.Data.Models;
 using static PsscFinalProject.Domain.Models.OrderProducts;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace PsscFinalProject.Data.Repositories
 {
@@ -63,7 +64,7 @@ namespace PsscFinalProject.Data.Repositories
             dbContext.Orders.Add(order);
 
             // Save changes to get the generated Order_ID
-            await dbContext.SaveChangesAsync();
+           await dbContext.SaveChangesAsync();
 
             // Retrieve the generated Order_ID
             int generatedOrderId = order.OrderId;
@@ -73,7 +74,7 @@ namespace PsscFinalProject.Data.Repositories
             {
                 var orderItem = new OrderItemDto
                 {
-                    OrderItemId = generatedOrderId, // Use the generated Order_ID
+                    OrderItemId =generatedOrderId , // Use the generated Order_ID
                     ProductCode = product.productCode.Value,
                     Quantity = product.productQuantity.Value,
                     Price = product.productPrice.Value

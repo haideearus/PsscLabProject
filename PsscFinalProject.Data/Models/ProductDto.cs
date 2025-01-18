@@ -22,5 +22,5 @@ public partial class ProductDto
     public int Stock { get; set; }
 
     [JsonIgnore]
-    public ICollection<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
+    public ICollection<OrderItemDto>? OrderItems { get; set; }
 }
