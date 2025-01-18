@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System;
 using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Domain.Models;
 
 namespace PsscFinalProject.Data.Repositories
 {
@@ -16,51 +17,17 @@ namespace PsscFinalProject.Data.Repositories
         {
             this.dbContext = dbContext;
         }
-
-        public async Task<UserDto?> GetUserByEmailAsync(string Email)
+        public async Task<List<ClientEmail>> GetExistingUsersAsync(IEnumerable<string> usersToCheck)
         {
-            return await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == Email);
-        }
 
-        public async Task DeleteUserAsync(int userId)
-        {
-            var user = await dbContext.Users.FindAsync(userId);
-            if (user != null)
-            {
-                dbContext.Users.Remove(user);
-                await dbContext.SaveChangesAsync();
-            }
-        }
-
-        public async Task<List<UserDto>> GetUsersPaginatedAsync(int pageIndex, int pageSize)
-        {
-            return await dbContext.Users
+            List<UserDto> users = await dbContext.Users
+                .Where(users => usersToCheck.Contains(users.Email))
                 .AsNoTracking()
-                .Skip(pageIndex * pageSize)
-                .Take(pageSize)
                 .ToListAsync();
+
+            return users.Select(users => new ClientEmail(users.Email))
+                          .ToList();
         }
-
-
-        public async Task<List<UserDto>> GetUsersAsync()
-        {
-            return await dbContext.Users.AsNoTracking().ToListAsync();
-        }
-
-        //public async Task SaveUsersAsync(IEnumerable<UserDto> users)
-        //{
-        //    try
-        //    {
-        //        dbContext.Users.AddRange(users.Where(u => u.User == 0));
-        //        dbContext.Users.UpdateRange(users.Where(u => u.UserId > 0));
-        //        await dbContext.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateException ex)
-        //    {
-        //        // Log the exception or handle it based on your business logic
-        //        throw new Exception("An error occurred while saving users.", ex);
-        //    }
-        //}
 
     }
 }
