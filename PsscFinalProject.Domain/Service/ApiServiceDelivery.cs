@@ -1,8 +1,11 @@
 ﻿using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
+using System;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
 
-namespace PsscFinalProject.Api
+namespace PsscFinalProject.Domain.Service
 {
     public class ApiServiceDelivery
     {

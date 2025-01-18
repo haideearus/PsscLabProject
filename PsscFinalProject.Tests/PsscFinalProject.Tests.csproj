@@ -30,7 +30,7 @@
     <PackageReference Include="RestSharp" Version="112.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PsscFinalProject.Domain\PsscFinalProject.Domain.csproj" />
+    <ProjectReference Include="..PsscLabProject\PsscFinalProject.Domain\PsscFinalProject.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

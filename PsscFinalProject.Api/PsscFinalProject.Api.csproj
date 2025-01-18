@@ -14,7 +14,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\PsscFinalProject.Data\PsscFinalProject.Data.csproj" />
-		<ProjectReference Include="..\PsscFinalProject.Domain\PsscFinalProject.Domain.csproj" />
 		<ProjectReference Include="..\PsscFinalProject.Events.ServiceBus\PsscFinalProject.Events.ServiceBus.csproj" />
 		<ProjectReference Include="..\PsscFinalProject.Events\PsscFinalProject.Events.csproj" />
 		<ProjectReference Include="..\UI\PsscFinalProject.UI.csproj" />

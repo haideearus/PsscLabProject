@@ -1,5 +1,5 @@
-﻿using PsscFinalProject.Domain.Models;
-using PsscFinalProject.Domain.Repositories;
+﻿using PsscFinalProject.Data.Interface;
+using PsscFinalProject.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

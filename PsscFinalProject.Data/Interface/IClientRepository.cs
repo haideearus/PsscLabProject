@@ -1,9 +1,8 @@
-
-using PsscFinalProject.Domain.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PsscFinalProject.Data.Models;
 
-namespace PsscFinalProject.Data.Repositories
+namespace PsscFinalProject.Data.Interface
 {
     public interface IClientRepository
     {

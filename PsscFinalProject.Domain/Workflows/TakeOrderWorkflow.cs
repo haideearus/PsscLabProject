@@ -1,14 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
-using PsscFinalProject.Data.Repositories;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Operations;
-using PsscFinalProject.Domain.Repositories;
 using static PsscFinalProject.Domain.Models.Order;
 using static PsscFinalProject.Domain.Models.OrderPublishEvent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using PsscFinalProject.Data.Interface;
 
 public class PublishOrderWorkflow
 {

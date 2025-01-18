@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using static PsscFinalProject.Domain.Models.Order;
 
-namespace PsscFinalProject.Domain.Repositories
+namespace PsscFinalProject.Data.Interface
 {
     public interface IOrderRepository
     {

@@ -1,11 +1,10 @@
-
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PsscFinalProject.Domain.Repositories
+namespace PsscFinalProject.Data.Interface
 {
     public interface IDeliveryRepository
     {
-       
+
     }
 }

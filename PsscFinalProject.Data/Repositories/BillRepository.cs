@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Data.Interface;
 
 namespace PsscFinalProject.Data.Repositories
 {
