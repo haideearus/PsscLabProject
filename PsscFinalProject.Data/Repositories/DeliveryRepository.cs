@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Domain.Models;
+using static PsscFinalProject.Domain.Models.OrderDelivery;
 
 namespace PsscFinalProject.Data.Repositories
 {
@@ -16,15 +18,15 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<List<DeliveryDto>> GetDeliveriesAsync()
+        public async Task<List<CalculatedTrackingNumber>> GetDeliveriesAsync()
         {
-            return await dbContext.Deliveries.AsNoTracking().ToListAsync();
+            await dbContext.SaveChangesAsync();
+            return new List<CalculatedTrackingNumber>(); //fake doar sa nu am eroare 
         }
 
-        public async Task SaveDeliveriesAsync(IEnumerable<DeliveryDto> deliveries)
+        public async Task SaveDeliveries(PublishedOrderDelivery deliveries)
         {
-            dbContext.Deliveries.AddRange(deliveries.Where(d => d.DeliveryId == 0));
-            dbContext.Deliveries.UpdateRange(deliveries.Where(d => d.DeliveryId > 0));
+          
             await dbContext.SaveChangesAsync();
         }
     }

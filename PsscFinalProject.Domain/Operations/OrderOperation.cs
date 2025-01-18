@@ -1,19 +1,14 @@
 ﻿using PsscFinalProject.Domain.Exceptions;
-using PsscFinalProject.Domain.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static PsscFinalProject.Domain.Models.Order;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
 namespace PsscFinalProject.Domain.Operations
 {
     // Base class (OrderOperation<TState>)
-    internal abstract class OrderOperation<TState> : DomainOperation<IOrder, TState, IOrder>
+    internal abstract class OrderOperation<TState> : DomainOperation<IOrderProducts, TState, IOrderProducts>
         where TState : class
     {
-        public override IOrder Transform(IOrder? order, TState? state)
+        public override IOrderProducts Transform(IOrderProducts? order, TState? state)
         {
             if (order == null)
             {
@@ -22,56 +17,56 @@ namespace PsscFinalProject.Domain.Operations
 
             return order switch
             {
-                UnvalidatedOrder unvalidatedOrder => OnUnvalidated(unvalidatedOrder, state),
-                ValidatedOrder validatedOrder => OnValid(validatedOrder, state),
-                InvalidOrder invalidOrder => OnInvalid(invalidOrder, state),
+                UnvalidatedOrderProducts unvalidatedOrder => OnUnvalidated(unvalidatedOrder, state),
+                ValidatedOrderProducts validatedOrder => OnValid(validatedOrder, state),
+                InvalidOrderProducts invalidOrder => OnInvalid(invalidOrder, state),
                 CalculatedOrder calculatedOrder => OnCalculated(calculatedOrder, state),
-                PaidOrder paidOrder => OnPaid(paidOrder, state),
+                PaidOrderProducts paidOrder => OnPaid(paidOrder, state),
                 _ => throw new InvalidOrderStateException($"Unsupported order type: {order.GetType().Name}")
             };
         }
 
-        protected virtual IOrder OnUnvalidated(UnvalidatedOrder unvalidatedOrder, TState? state) => unvalidatedOrder;
+        protected virtual IOrderProducts OnUnvalidated(UnvalidatedOrderProducts unvalidatedOrder, TState? state) => unvalidatedOrder;
 
-        protected virtual IOrder OnValid(ValidatedOrder validatedOrder, TState? state) => validatedOrder;
+        protected virtual IOrderProducts OnValid(ValidatedOrderProducts validatedOrder, TState? state) => validatedOrder;
 
-        protected virtual IOrder OnCalculated(CalculatedOrder calculatedOrder, TState? state) => calculatedOrder;
+        protected virtual IOrderProducts OnCalculated(CalculatedOrder calculatedOrder, TState? state) => calculatedOrder;
 
-        protected virtual IOrder OnPaid(PaidOrder paidOrder, TState? state) => paidOrder;
+        protected virtual IOrderProducts OnPaid(PaidOrderProducts paidOrder, TState? state) => paidOrder;
 
-        protected virtual IOrder OnInvalid(InvalidOrder invalidOrder, TState? state) => invalidOrder;
+        protected virtual IOrderProducts OnInvalid(InvalidOrderProducts invalidOrder, TState? state) => invalidOrder;
 
         // Make OnValidated virtual to allow overriding in derived class
-        protected virtual IOrder OnValidated(ValidatedOrder validatedOrder) => validatedOrder;
+        protected virtual IOrderProducts OnValidated(ValidatedOrderProducts validatedOrder) => validatedOrder;
     }
 
     // Derived class (OrderOperation)
     internal abstract class OrderOperation : OrderOperation<object>
     {
-        internal IOrder Transform(IOrder order) => Transform(order, null);
+        internal IOrderProducts Transform(IOrderProducts order) => Transform(order, null);
 
-        protected sealed override IOrder OnUnvalidated(UnvalidatedOrder unvalidatedOrder, object? state) => OnUnvalidated(unvalidatedOrder);
+        protected sealed override IOrderProducts OnUnvalidated(UnvalidatedOrderProducts unvalidatedOrder, object? state) => OnUnvalidated(unvalidatedOrder);
 
-        protected virtual IOrder OnUnvalidated(UnvalidatedOrder unvalidatedOrder) => unvalidatedOrder;
+        protected virtual IOrderProducts OnUnvalidated(UnvalidatedOrderProducts unvalidatedOrder) => unvalidatedOrder;
 
-        protected sealed override IOrder OnValid(ValidatedOrder validatedOrder, object? state) => OnValid(validatedOrder);
+        protected sealed override IOrderProducts OnValid(ValidatedOrderProducts validatedOrder, object? state) => OnValid(validatedOrder);
 
-        protected virtual IOrder OnValid(ValidatedOrder validatedOrder) => validatedOrder;
+        protected virtual IOrderProducts OnValid(ValidatedOrderProducts validatedOrder) => validatedOrder;
 
-        protected sealed override IOrder OnCalculated(CalculatedOrder calculatedOrder, object? state) => OnCalculated(calculatedOrder);
+        protected sealed override IOrderProducts OnCalculated(CalculatedOrder calculatedOrder, object? state) => OnCalculated(calculatedOrder);
 
-        protected virtual IOrder OnCalculated(CalculatedOrder calculatedOrder) => calculatedOrder;
+        protected virtual IOrderProducts OnCalculated(CalculatedOrder calculatedOrder) => calculatedOrder;
 
-        protected sealed override IOrder OnPaid(PaidOrder paidOrder, object? state) => OnPaid(paidOrder);
+        protected sealed override IOrderProducts OnPaid(PaidOrderProducts paidOrder, object? state) => OnPaid(paidOrder);
 
-        protected virtual IOrder OnPaid(PaidOrder paidOrder) => paidOrder;
+        protected virtual IOrderProducts OnPaid(PaidOrderProducts paidOrder) => paidOrder;
 
-        protected sealed override IOrder OnInvalid(InvalidOrder invalidOrder, object? state) => OnInvalid(invalidOrder);
+        protected sealed override IOrderProducts OnInvalid(InvalidOrderProducts invalidOrder, object? state) => OnInvalid(invalidOrder);
 
-        protected virtual IOrder OnInvalid(InvalidOrder invalidOrder) => invalidOrder;
+        protected virtual IOrderProducts OnInvalid(InvalidOrderProducts invalidOrder) => invalidOrder;
 
         // Here we add the override keyword to override the base method
-        protected override IOrder OnValidated(ValidatedOrder validatedOrder) => validatedOrder;
+        protected override IOrderProducts OnValidated(ValidatedOrderProducts validatedOrder) => validatedOrder;
     }
 
 }

@@ -12,7 +12,7 @@ namespace PsscFinalProject.Domain.Models
     {
         public int Value { get; }
 
-        internal ProductQuantity(int value)
+        public ProductQuantity(int value)
         {
             if (value < 0)
             {

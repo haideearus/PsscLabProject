@@ -17,29 +17,49 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<List<ValidatedProduct>> GetProductsByCodesAsync(IEnumerable<string> productCodes)
-        {
-            var products = await dbContext.Products
-                .Where(p => productCodes.Contains(p.Code))
-                .AsNoTracking()
-                .ToListAsync();
-
-            return products.Select(p => new ValidatedProduct(
-                ProductName.Create(p.Name),
-                ProductCode.Create(p.Code),
-                ProductPrice.Create(p.Price),
-                ProductQuantityType.Create(p.QuantityType),
-                ProductQuantity.Create(1) // Default quantity
-            )).ToList();
-        }
         public async Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck)
         {
-            var products = await dbContext.Products
+            List<ProductDto> products = await dbContext.Products
                 .Where(product => productCodesToCheck.Contains(product.Code))
                 .AsNoTracking()
                 .ToListAsync();
 
             return products.Select(product => new ProductCode(product.Code)).ToList();
         }
+
+        public async Task<List<Products>> GetProductsByCodesAsync(IEnumerable<string> productCodes)
+        {
+            List<ProductDto> catalog = await dbContext.Products
+                .Where(product => productCodes.Contains(product.Code))
+                .AsNoTracking()
+                .ToListAsync();
+            return catalog.Select(
+                 product => new Products(new ProductCode(product.Code),
+                new ProductQuantity(product.Stock), new ProductPrice(product.Price)))
+                    .ToList();
+        }
+
+        public async Task<List<ProductQuantity>> GetProductStockByCodesAsync(IEnumerable<string> productCode)
+        {
+            List<ProductDto> catalog = await dbContext.Products
+                .Where(product => productCode.Contains(product.Code))
+                .AsNoTracking()
+                .ToListAsync();
+            return catalog.Select(
+                product => new ProductQuantity(product.Stock))
+                .ToList();
+        }
+
+        public async Task<List<ProductPrice>> GetProductPriceByCodesAsync(IEnumerable<string> productCode)
+        {
+            List<ProductDto> catalog = await dbContext.Products
+                           .Where(product => productCode.Contains(product.Code))
+                           .AsNoTracking()
+                           .ToListAsync();
+            return catalog.Select(
+                product => new ProductPrice(product.Price))
+                            .ToList();
+        }
+
     }
 }

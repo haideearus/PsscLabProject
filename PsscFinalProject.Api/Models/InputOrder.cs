@@ -21,28 +21,4 @@ namespace PsscFinalProject.Api.Models
             ProductList = productList ?? throw new ArgumentNullException(nameof(productList), "ProductList cannot be null");
         }
     }
-
-    public class InputProduct
-    {
-        [Required]
-        public int ProductId { get; set; } 
-
-        [Required]
-        public string Name { get; set; }
-
-        [Required]
-        public decimal Price { get; set; }
-
-        [Required]
-        [Range(1, 1000, ErrorMessage = "Quantity must be between 1 and 1000.")]
-        public int Quantity { get; set; }
-
-        public InputProduct(int productId, string name, decimal price, int quantity)
-        {
-            ProductId = productId;
-            Name = name ?? throw new ArgumentNullException(nameof(name), "Name cannot be null");
-            Price = price;
-            Quantity = quantity;
-        }
-    }
 }

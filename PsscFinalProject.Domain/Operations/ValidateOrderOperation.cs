@@ -1,9 +1,8 @@
 ﻿using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using static PsscFinalProject.Domain.Models.Order;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
 namespace PsscFinalProject.Domain.Operations
 {
@@ -16,85 +15,77 @@ namespace PsscFinalProject.Domain.Operations
             this.productRepository = productRepository;
         }
 
-        protected override IOrder OnUnvalidated(UnvalidatedOrder unvalidatedOrder)
+        protected override IOrderProducts OnUnvalidated(UnvalidatedOrderProducts unvalidatedOrder)
         {
-            (List<ValidatedProduct> validatedProducts, IEnumerable<string> validationErrors) = ValidateListOfProducts(unvalidatedOrder);
+            var (validatedProducts, validationErrors) = ValidateProducts(unvalidatedOrder);
 
             if (validationErrors.Any())
             {
-                return new InvalidOrder(unvalidatedOrder.ProductList, validationErrors);
+                return new InvalidOrderProducts(unvalidatedOrder.ProductList, validationErrors);
             }
-            else
-            {
-                return new ValidatedOrder(new ClientEmail(unvalidatedOrder.ClientEmail), validatedProducts);
-            }
+
+            return new ValidatedOrderProducts(validatedProducts);
         }
 
-        private (List<ValidatedProduct>, IEnumerable<string>) ValidateListOfProducts(UnvalidatedOrder order)
+        private (List<ValidatedOrder>, IEnumerable<string>) ValidateProducts(UnvalidatedOrderProducts unvalidatedOrder)
         {
-            List<string> validationErrors = new();
-            List<ValidatedProduct> validatedProducts = new();
+            var validationErrors = new List<string>();
+            var validatedProducts = new List<ValidatedOrder>();
 
-            foreach (UnvalidatedProduct unvalidatedProduct in order.ProductList)
+            foreach (var product in unvalidatedOrder.ProductList)
             {
-                ValidatedProduct? validatedProduct = ValidateProduct(unvalidatedProduct, validationErrors);
-                if (validatedProduct != null)
+                var validationResult = ValidateProduct(product);
+
+                if (validationResult.IsValid && validationResult.ValidatedProduct != null)
                 {
-                    validatedProducts.Add(validatedProduct);
+                    validatedProducts.Add(validationResult.ValidatedProduct);
+                }
+                else
+                {
+                    validationErrors.AddRange(validationResult.Errors);
                 }
             }
 
             return (validatedProducts, validationErrors);
         }
 
-        private ValidatedProduct? ValidateProduct(UnvalidatedProduct unvalidatedProduct, List<string> validationErrors)
+        private (bool IsValid, ValidatedOrder? ValidatedProduct, List<string> Errors) ValidateProduct(UnvalidatedOrder product)
         {
-            List<string> currentValidationErrors = new();
-            ProductCode? productCode = ValidateAndParseProductCode(unvalidatedProduct, currentValidationErrors);
-            ProductQuantity? quantity = ValidateAndParseQuantity(unvalidatedProduct, currentValidationErrors);
-            ProductName productName = new(unvalidatedProduct.ProductName);
-            ProductPrice productPrice = new(unvalidatedProduct.ProductPrice);
-            ProductQuantityType quantityType = new(unvalidatedProduct.ProductQuantityType);
+            var errors = new List<string>();
 
-            ValidatedProduct? validatedProduct = null;
-            if (!currentValidationErrors.Any())
+            var productCode = ValidateProductCode(product.ProductCode, errors);
+            var quantity = ValidateQuantity(product.Quantity, errors);
+
+            if (!errors.Any() && productCode != null && quantity != null)
             {
-                validatedProduct = new ValidatedProduct(productName, productCode!, productPrice, quantityType, quantity!);
-            }
-            else
-            {
-                validationErrors.AddRange(currentValidationErrors);
+                return (true, new ValidatedOrder(new ClientEmail(product.ClientEmail), productCode, quantity), errors);
             }
 
-            return validatedProduct;
+            return (false, null, errors);
         }
 
-        private ProductCode? ValidateAndParseProductCode(UnvalidatedProduct unvalidatedProduct, List<string> validationErrors)
+        private ProductCode? ValidateProductCode(string productCode, List<string> errors)
         {
-            if (string.IsNullOrEmpty(unvalidatedProduct.ProductCode) || !CheckProductExists(unvalidatedProduct.ProductCode))
+            var existingProducts = productRepository.GetExistingProductsAsync(new List<string> { productCode }).Result;
+
+            if (!existingProducts.Any(p => p.Value == productCode))
             {
-                validationErrors.Add($"Invalid product code or product not found ({unvalidatedProduct.ProductCode})");
+                errors.Add($"Invalid product code: {productCode}");
                 return null;
             }
 
-            return new ProductCode(unvalidatedProduct.ProductCode);
+            return new ProductCode(productCode);
         }
 
-        private ProductQuantity? ValidateAndParseQuantity(UnvalidatedProduct unvalidatedProduct, List<string> validationErrors)
+        private ProductQuantity? ValidateQuantity(int quantity, List<string> errors)
         {
-            if (unvalidatedProduct.ProductQuantity <= 0)
+            if (quantity <= 0)
             {
-                validationErrors.Add($"Invalid quantity ({unvalidatedProduct.ProductCode}, {unvalidatedProduct.ProductQuantity})");
+                errors.Add($"Invalid quantity: {quantity}");
                 return null;
             }
 
-            return new ProductQuantity(unvalidatedProduct.ProductQuantity);
-        }
-
-        private bool CheckProductExists(string code)
-        {
-            var existingProducts = productRepository.GetExistingProductsAsync(new List<string> { code }).Result;
-            return existingProducts.Any(product => product.Value.Equals(code, StringComparison.OrdinalIgnoreCase));
+            return new ProductQuantity(quantity);
         }
     }
 }

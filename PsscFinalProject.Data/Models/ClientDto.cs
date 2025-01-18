@@ -22,6 +22,6 @@ public partial class ClientDto
     [JsonIgnore]
     public virtual UserDto? EmailNavigation { get; set; }
 
-    [JsonIgnore]
-    public virtual ICollection<OrderDto> Orders { get; set; } = new List<OrderDto>();
+    //[JsonIgnore]
+    //public virtual ICollection<OrderDto> Orders { get; set; } = new List<OrderDto>();
 }

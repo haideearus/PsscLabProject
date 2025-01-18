@@ -1,10 +1,11 @@
-﻿using PsscFinalProject.Data.Models;
-using PsscFinalProject.Domain.Models;
-using PsscFinalProject.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Data.Models;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
 namespace PsscFinalProject.Data.Repositories
 {
@@ -17,127 +18,73 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<List<ValidatedProduct>> GetOrderItemsAsync()
+        public async Task<List<CalculatedProduct>> GetProductsAsync()
         {
-            var orderItems = await dbContext.OrderItems.AsNoTracking().ToListAsync();
-            return orderItems.Select(dto => MapToDomain(dto)).ToList();
-        }
-        public async Task AddOrderItemsAsync(IEnumerable<OrderItem> orderItems)
-        {
-            var orderItemDtos = orderItems.Select(oi => new OrderItemDto
+            // Load order items and join them with products and clients
+            var orderItems = await (
+                from oi in dbContext.OrderItems
+                join o in dbContext.Orders on oi.OrderItemId equals o.OrderId
+                join p in dbContext.Products on oi.ProductCode equals p.Code
+                join c in dbContext.Clients on o.ClientEmail equals c.Email
+                select new { oi, o, p, c }
+            ).ToListAsync();
+
+            // Map results to the domain model
+            var calculatedProducts = orderItems.Select(item => new CalculatedProduct(
+                clientEmail: new ClientEmail(item.c.Email),
+                productCode: new ProductCode(item.p.Code),
+                productPrice: new ProductPrice(item.p.Price),
+                productQuantityType: new ProductQuantityType(item.p.QuantityType),
+                productQuantity: new ProductQuantity(item.oi.Quantity),
+                totalPrice: new ProductPrice(item.oi.Price * item.oi.Quantity)
+            )
             {
-                OrderItemId = oi.OrderId,
-                ProductCode = oi.ProductCode,
-                Price = oi.Price,
-                Quantity = oi.Quantity
+                OrderItemId = item.oi.OrderItemId,
+                OrderId = item.o.OrderId,
+                ClientEmail = item.c.Email,
+                ProductId = item.p.ProductId
             }).ToList();
 
-            dbContext.OrderItems.AddRange(orderItemDtos);
-            await dbContext.SaveChangesAsync();
+            return calculatedProducts;
         }
-        public async Task AddOrderItemsAsync1(IEnumerable<OrderItem> orderItems)
+
+        public async Task SaveOrders(PaidOrderProducts order)
         {
-            var orderItemDtos = orderItems.Select(oi => new OrderItemDto
+            // Fetch existing clients and products from the database
+            var clients = await dbContext.Clients.ToDictionaryAsync(client => client.Email);
+            var products = await dbContext.Products.ToDictionaryAsync(product => product.Code);
+
+            // Prepare new order items
+            var newOrderItems = order.ProductList.Where(p => p.IsUpdated && p.OrderItemId == 0)
+                .Select(p => new OrderItemDto
+                {
+                    OrderItemId = p.OrderId,
+                    ProductCode = p.productCode.Value,
+                    Price = p.productPrice.Value,
+                    Quantity = p.productQuantity.Value
+                }).ToList();
+
+            // Prepare updated order items
+            var updatedOrderItems = order.ProductList.Where(p => p.IsUpdated && p.OrderItemId > 0)
+                .Select(p => new OrderItemDto
+                {
+                    OrderItemId = p.OrderItemId,
+                    ProductCode = p.productCode.Value,
+                    Price = p.productPrice.Value,
+                    Quantity = p.productQuantity.Value
+                }).ToList();
+
+            // Add new order items
+            dbContext.OrderItems.AddRange(newOrderItems);
+
+            // Update existing order items
+            foreach (var item in updatedOrderItems)
             {
-                OrderItemId = oi.OrderId,
-                ProductCode = oi.ProductCode,
-                Price = oi.Price,
-                Quantity = oi.Quantity
-            }).ToList();
-
-            dbContext.OrderItems.AddRange(orderItemDtos);
-            await dbContext.SaveChangesAsync();
-        }
-
-        public async Task AddOrderItemsAsync(IEnumerable<OrderItemDto> orderItems)
-        {
-            dbContext.OrderItems.AddRange(orderItems);
-            await dbContext.SaveChangesAsync();
-        }
-
-        public async Task SaveOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems)
-        {
-            var dtos = orderItems.Select(domain => MapToDto(domain));
-            dbContext.OrderItems.AddRange(dtos.Where(oi => oi.OrderItemId == 0));
-            dbContext.OrderItems.UpdateRange(dtos.Where(oi => oi.OrderItemId > 0));
-            await dbContext.SaveChangesAsync();
-        }
-
-        public async Task DeleteOrderItemAsync(int orderItemId)
-        {
-            var orderItem = await dbContext.OrderItems.FindAsync(orderItemId);
-            if (orderItem != null)
-            {
-                dbContext.OrderItems.Remove(orderItem);
-                await dbContext.SaveChangesAsync();
+                dbContext.Entry(item).State = EntityState.Modified;
             }
-        }
 
-        //public async Task AddOrderItemAsync(int orderId, string productCode, decimal price)
-        //{
-        //    var orderItem = new OrderItemDto
-        //    {
-        //        OrderItemId = orderId,
-        //        ProductCode = productCode,
-        //        Price = price
-        //    };
-
-        //    dbContext.OrderItems.Add(orderItem);
-        //    await dbContext.SaveChangesAsync();
-        //}
-
-        public async Task AddOrderItemAsync(int orderId, string productCode, decimal price)
-        {
-            var orderItem = new OrderItemDto
-            {
-                OrderItemId = orderId,
-                ProductCode = productCode,
-                Price = price
-            };
-
-            dbContext.OrderItems.Add(orderItem);
+            // Save changes to the database
             await dbContext.SaveChangesAsync();
         }
-
-        //public async Task AddOrderItemsAsync(IEnumerable<OrderItemDto> orderItems)
-        //{
-        //    dbContext.OrderItems.AddRange(orderItems);
-        //    await dbContext.SaveChangesAsync();
-        //}
-
-        public interface IOrderItemService
-        {
-            Task AddOrderItemsAsync(IEnumerable<OrderItem> orderItems);
-        }
-
-
-        public async Task AddOrderItemsAsync(IEnumerable<ValidatedProduct> orderItems)
-        {
-            var dtos = orderItems.Select(domain => MapToDto(domain));
-            dbContext.OrderItems.AddRange(dtos);
-            await dbContext.SaveChangesAsync();
-        }
-
-        private static ValidatedProduct MapToDomain(OrderItemDto dto)
-        {
-            return new ValidatedProduct(
-                ProductName.Create(" "), // Replace with actual logic
-                ProductCode.Create(dto.ProductCode),
-                ProductPrice.Create(dto.Price),
-                ProductQuantityType.Create("Quantity Type Placeholder"), // Replace with actual logic
-                ProductQuantity.Create(1) // Replace with actual logic
-            );
-        }
-
-        private static OrderItemDto MapToDto(ValidatedProduct domain)
-        {
-            return new OrderItemDto
-            {
-                OrderItemId = 0, // Assume new item; update as needed
-                ProductCode = domain.ProductCode.Value,
-                Price = domain.ProductPrice.Value
-            };
-        }
-
     }
 }
