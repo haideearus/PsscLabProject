@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace PsscFinalProject.Data.Models;
 
 public partial class OrderDto
 {
-    [JsonIgnore]
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int OrderId { get; set; }
 
     public DateTime OrderDate { get; set; }

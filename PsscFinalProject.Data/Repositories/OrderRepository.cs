@@ -1,11 +1,11 @@
-using PsscFinalProject.Domain.Models;
-using PsscFinalProject.Domain.Repositories;
-using PsscFinalProject.Data.Models;
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static PsscFinalProject.Domain.Models.Order;
+using Microsoft.EntityFrameworkCore;
+using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Repositories;
+using PsscFinalProject.Data.Models;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
 namespace PsscFinalProject.Data.Repositories
 {
@@ -18,173 +18,71 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<List<CalculatedOrder>> GetExistingOrdersAsync()
+        public async Task<List<CalculatedProduct>> GetExistingOrdersAsync()
         {
-            // Load orders and clients from the database
-            var foundOrders = await (
+            // Load orders and join them with products and clients
+            var orders = await (
                 from o in dbContext.Orders
                 join c in dbContext.Clients on o.ClientEmail equals c.Email
-                select new { o.OrderId, o.OrderDate, o.PaymentMethod, o.TotalAmount, o.ShippingAddress, o.State, c.Email }
+                join oi in dbContext.OrderItems on o.OrderId equals oi.OrderItemId
+                join p in dbContext.Products on oi.ProductCode equals p.Code
+                select new { o, oi, p, c }
+            ).ToListAsync();
+
+            // Map results to the domain model
+            var calculatedProducts = orders.Select(order => new CalculatedProduct(
+                clientEmail: new ClientEmail(order.c.Email),
+                productCode: new ProductCode(order.p.Code),
+                productPrice: new ProductPrice(order.p.Price),
+                productQuantityType: new ProductQuantityType(order.p.QuantityType),
+                productQuantity: new ProductQuantity(order.oi.Quantity),
+                totalPrice: new ProductPrice(order.oi.Price * order.oi.Quantity)
             )
-            .AsNoTracking()
-            .ToListAsync();
-
-            // Map database entities to domain models (CalculatedOrder)
-            List<CalculatedOrder> foundOrdersModel = foundOrders.Select(result =>
             {
-                // Since we are no longer dealing with products (Bills), we pass an empty list or placeholder.
-                var placeholderProductList = new List<CalculatedProduct>(); // Empty list if no products
-
-                return new CalculatedOrder(
-                    productList: placeholderProductList,
-                    orderDate: result.OrderDate,
-                    paymentMethod: result.PaymentMethod,
-                    totalAmount: result.TotalAmount,
-                    shippingAddress: result.ShippingAddress,
-                    state: result.State,
-                    clientEmail: new ClientEmail(result.Email) // Assuming ClientEmail is a domain model
-                );
+                OrderItemId = order.oi.OrderItemId,
+                OrderId = order.o.OrderId,
+                ClientEmail = order.c.Email,
+                ProductId = order.p.ProductId
             }).ToList();
 
-            return foundOrdersModel;
+            return calculatedProducts;
         }
 
-
-        public async Task<int> SaveOrdersAsync(PaidOrder paidOrder)
+        public async Task SaveOrdersAsync(PaidOrderProducts paidOrder)
         {
             var order = new OrderDto
             {
-                ClientEmail = paidOrder.ClientEmail.Value,
                 OrderDate = paidOrder.OrderDate,
-                PaymentMethod = paidOrder.PaymentMethod,
-                TotalAmount = paidOrder.TotalAmount,
-                ShippingAddress = paidOrder.ShippingAddress,
-                State = paidOrder.State
+                PaymentMethod = 1, // Example value
+                TotalAmount = paidOrder.TotalAmount.Value,
+                ShippingAddress = "Default Address", // Example value
+                State = 1, // Example value
+                ClientEmail = paidOrder.ClientEmail.Value // Ensure this maps correctly
             };
 
             dbContext.Orders.Add(order);
-            await dbContext.SaveChangesAsync();
-            return order.OrderId; // Return the generated OrderId
-        }
 
-
-        //public async Task SaveOrdersAsync(PaidOrder paidOrder)
-        //{
-        //    // Load clients by their email (assuming Csv is the client's email)
-        //    ILookup<string, ClientDto> clients = (await dbContext.Clients.ToListAsync())
-        //        .ToLookup(client => client.Email);
-
-        //    // Add new orders and update existing ones based on the paid order state
-        //    AddNewOrders(paidOrder, clients);
-        //    UpdateExistingOrders(paidOrder, clients);
-
-        //    // Save changes to the database
-        //    await dbContext.SaveChangesAsync();
-        //}
-
-        public async Task SaveOrderWithItemsAsync(CalculatedOrder order, List<CalculatedProduct> products)
-        {
-            // Insert the main order
-            var orderEntity = new OrderDto
-            {
-                ClientEmail = order.ClientEmail.Value,
-                OrderDate = order.OrderDate,
-                PaymentMethod = order.PaymentMethod,
-                TotalAmount = order.TotalAmount,
-                ShippingAddress = order.ShippingAddress,
-                State = order.State
-            };
-
-            dbContext.Orders.Add(orderEntity);
+            // Save changes to get the generated Order_ID
             await dbContext.SaveChangesAsync();
 
-            // Fetch all products by their codes to validate and map them
-            var productCodes = products.Select(p => p.ProductCode.Value).ToList();
-            var productEntities = await dbContext.Products
-                .Where(p => productCodes.Contains(p.Code))
-                .ToListAsync();
+            // Retrieve the generated Order_ID
+            int generatedOrderId = order.OrderId;
 
-            // Insert products into ORDER_ITEM table
-            foreach (var product in products)
+            // Add the order items with the generated Order_ID
+            foreach (var product in paidOrder.ProductList)
             {
-                var productEntity = productEntities.FirstOrDefault(p => p.Code == product.ProductCode.Value);
-                if (productEntity == null)
+                var orderItem = new OrderItemDto
                 {
-                    throw new KeyNotFoundException($"Product with code '{product.ProductCode.Value}' not found.");
-                }
-
-                var orderItemEntity = new OrderItemDto
-                {
-                    OrderItemId = orderEntity.OrderId, // Reference the newly created order
-                    ProductCode = productEntity.Code, // Use the product's code
-                    Price = product.ProductPrice.Value // Use the provided price
+                    OrderItemId = generatedOrderId, // Use the generated Order_ID
+                    ProductCode = product.productCode.Value,
+                    Quantity = product.productQuantity.Value,
+                    Price = product.productPrice.Value
                 };
-
-                dbContext.OrderItems.Add(orderItemEntity);
+                dbContext.OrderItems.Add(orderItem);
             }
 
+            // Save the order items
             await dbContext.SaveChangesAsync();
-        }
-
-
-
-        private void UpdateExistingOrders(PaidOrder paidOrder, ILookup<string, ClientDto> clients)
-        {
-            IEnumerable<OrderDto> updatedOrders = paidOrder.ProductList.Where(o => o.IsUpdated && o.ProductDetailId > 0)
-                .Select(o => new OrderDto()
-                {
-                    ClientEmail = clients[paidOrder.Csv].Single().Email, // Assuming Csv is related to client identification
-                    OrderDate = DateTime.Now, // Assuming current date, adjust if needed
-                    PaymentMethod = 1, // Example payment method, adjust if needed
-                    TotalAmount = o.TotalPrice, // Assuming the total price comes from the product
-                    ShippingAddress = "Unknown", // Adjust according to the model structure
-                    State = 1, // Example state, adjust if needed
-                });
-
-            foreach (var entity in updatedOrders)
-            {
-                dbContext.Entry(entity).State = EntityState.Modified;
-            }
-        }
-
-        public async Task<int> AddOrderAsync(PaidOrder paidOrder)
-        {
-            var order = new OrderDto
-            {
-                ClientEmail = paidOrder.ClientEmail.Value,
-                OrderDate = paidOrder.OrderDate,
-                PaymentMethod = paidOrder.PaymentMethod,
-                TotalAmount = paidOrder.TotalAmount,
-                ShippingAddress = paidOrder.ShippingAddress,
-                State = paidOrder.State
-            };
-
-            dbContext.Orders.Add(order);
-            await dbContext.SaveChangesAsync();
-            return order.OrderId; // Assuming OrderId is auto-generated
-        }
-
-
-        private void AddNewOrders(PaidOrder paidOrder, ILookup<string, ClientDto> clients)
-        {
-            IEnumerable<OrderDto> newOrders = paidOrder.ProductList
-                .Where(o => !o.IsUpdated && o.ProductDetailId == 0)
-                .Select(o => new OrderDto()
-                {
-                    ClientEmail = clients[paidOrder.Csv].Single().Email, // Assuming Csv is a reference for the client
-                    OrderDate = DateTime.Now, // Assuming current date, adjust if necessary
-                    PaymentMethod = 1, // Example payment method, adjust if needed
-                    TotalAmount = o.TotalPrice, // Assuming the total price comes from the product
-                    ShippingAddress = "Unknown", // Adjust according to the model structure
-                    State = 1, // Example state, adjust if needed
-                });
-
-            dbContext.AddRange(newOrders);
-        }
-
-        Task IOrderRepository.SaveOrdersAsync(PaidOrder paidOrder)
-        {
-            throw new NotImplementedException();
         }
     }
 }

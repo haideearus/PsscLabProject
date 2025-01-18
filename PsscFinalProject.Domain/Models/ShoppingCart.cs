@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static PsscFinalProject.Domain.Models.Order;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
 namespace PsscFinalProject.Domain.Models
 {

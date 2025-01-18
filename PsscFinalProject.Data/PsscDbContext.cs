@@ -100,35 +100,13 @@ public partial class PsscDbContext : DbContext
 
         modelBuilder.Entity<OrderItemDto>(entity =>
         {
-            entity.HasKey(e => e.OrderItemId); // Define the primary key
-            entity.ToTable("ORDER_ITEM");
-
-            entity.Property(e => e.OrderItemId)
-                .HasColumnName("OrderItem_ID")
-                .ValueGeneratedOnAdd();
-            entity.Property(e => e.ProductCode)
-                .HasMaxLength(50)
-                .IsUnicode(false);
+            entity.ToTable("ORDERITEM");
+            entity.Property(e => e.OrderItemId).HasColumnName("OrderItem_Id");
             entity.Property(e => e.Price)
-                .HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.OrderItemId) // Foreign key for OrderDto
-                .HasColumnName("Order_ID");
-
-            // Define foreign key relationship to ProductDto
-            entity.HasOne<ProductDto>()
-                .WithMany(p => p.OrderItems)
-                .HasForeignKey(o => o.ProductCode) // Foreign key in OrderItemDto
-                .HasPrincipalKey(p => p.Code)     // Principal key in ProductDto
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ORDER_ITEM_PRODUCT");
-
-            // Define foreign key relationship to OrderDto
-            entity.HasOne<OrderDto>()
-                .WithMany(o => o.OrderItems)
-                .HasForeignKey(o => o.OrderItemId)  // Foreign key in OrderItemDto
-                .HasPrincipalKey(o => o.OrderId) // Principal key in OrderDto
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ORDER_ITEM_ORDER");
+                  .HasColumnName("Price")
+                  .HasColumnType("decimal(10, 2)"); // Define precision
+            entity.Property(e => e.ProductCode).HasColumnName("ProductCode");
+            entity.Property(e => e.Quantity).HasColumnName("Quantity");
         });
 
         // Configure ProductDto
@@ -159,31 +137,19 @@ public partial class PsscDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
-        // Configure OrderDto
         modelBuilder.Entity<OrderDto>(entity =>
         {
-            entity.HasKey(e => e.OrderId); // Define the primary key
             entity.ToTable("ORDER");
-
-            entity.Property(e => e.OrderId)
-                .HasColumnName("Order_ID");
-            entity.Property(e => e.ClientEmail)
-                .HasMaxLength(200)
-                .IsUnicode(false);
-            entity.Property(e => e.OrderDate)
-                .HasColumnType("datetime");
-            entity.Property(e => e.ShippingAddress)
-                .HasMaxLength(255)
-                .IsUnicode(false);
+            entity.HasKey(e => e.OrderId);
+            entity.Property(e => e.OrderId).HasColumnName("Order_ID");
+            entity.Property(e => e.OrderDate).HasColumnName("OrderDate");
+            entity.Property(e => e.PaymentMethod).HasColumnName("PaymentMethod");
             entity.Property(e => e.TotalAmount)
-                .HasColumnType("decimal(10, 2)");
-
-            // Define navigation property
-            entity.HasMany(o => o.OrderItems)
-                .WithOne()
-                .HasForeignKey(oi => oi.OrderItemId)
-                .HasPrincipalKey(o => o.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
+                  .HasColumnName("TotalAmount")
+                  .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ShippingAddress).HasColumnName("ShippingAddress");
+            entity.Property(e => e.State).HasColumnName("State");
+            entity.Property(e => e.ClientEmail).HasColumnName("ClientEmail");
         });
 
         modelBuilder.Entity<UserDto>(entity =>

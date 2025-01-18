@@ -3,12 +3,12 @@ using PsscFinalProject.Data.Repositories;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Operations;
 using PsscFinalProject.Domain.Repositories;
-using static PsscFinalProject.Domain.Models.Order;
 using static PsscFinalProject.Domain.Models.OrderPublishEvent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
 public class PublishOrderWorkflow
 {
@@ -37,20 +37,20 @@ public class PublishOrderWorkflow
         try
         {
             // Step 1: Validate client association
-            var clientEmail = command.ClientEmail;
-            var clientExists = await clientRepository.ClientExistsAsync(clientEmail);
+            var clientEmail = command.InputProducts.First().ClientEmail;
+            var existingClients = await clientRepository.GetExistingClientsAsync(new List<string> { clientEmail });
 
-            if (!clientExists)
+            if (!existingClients.Any())
             {
                 logger.LogWarning("Client not found: {ClientEmail}", clientEmail);
                 return new OrderPublishFailedEvent(new List<string> { $"Client with email {clientEmail} does not exist." });
             }
 
             // Step 2: Validate product codes in the order
-            var productCodes = command.ProductList.Select(p => p.ProductCode).Distinct();
-            var existingProducts = await productRepository.GetExistingProductsAsync(productCodes);
+            var productCodes = command.InputProducts.Select(p => p.ProductCode).Distinct();
+            var existingProducts = await productRepository.GetProductsByCodesAsync(productCodes);
 
-            var missingProductCodes = productCodes.Except(existingProducts.Select(p => p.Value)).ToList();
+            var missingProductCodes = productCodes.Except(existingProducts.Select(p => p.code.Value)).ToList();
             if (missingProductCodes.Any())
             {
                 logger.LogWarning("Products not found: {ProductCodes}", string.Join(", ", missingProductCodes));
@@ -59,10 +59,10 @@ public class PublishOrderWorkflow
 
             // Step 3: Validate the order
             var validateOrderOperation = new ValidateOrderOperation(productRepository);
-            var unvalidatedOrder = new UnvalidatedOrder(clientEmail, command.ProductList);
+            var unvalidatedOrder = new UnvalidatedOrderProducts(command.InputProducts);
             var validatedOrder = validateOrderOperation.Transform(unvalidatedOrder);
 
-            if (validatedOrder is InvalidOrder invalidOrder)
+            if (validatedOrder is InvalidOrderProducts invalidOrder)
             {
                 logger.LogWarning("Order validation failed: {Reasons}", string.Join(", ", invalidOrder.Reasons));
                 return new OrderPublishFailedEvent(invalidOrder.Reasons.ToList());
@@ -70,7 +70,7 @@ public class PublishOrderWorkflow
 
             // Step 4: Calculate total price and prepare the order
             var calculateOrderOperation = new CalculateOrderOperation();
-            var calculatedOrder = calculateOrderOperation.Transform((ValidatedOrder)validatedOrder);
+            var calculatedOrder = calculateOrderOperation.Transform((ValidatedOrderProducts)validatedOrder);
 
             if (calculatedOrder is not CalculatedOrder finalOrder)
             {
@@ -79,44 +79,23 @@ public class PublishOrderWorkflow
             }
 
             // Step 5: Save the order to the database
-            // Step 5: Save the order to the database
-            var paidOrder = new PaidOrder(
-                finalOrder.ClientEmail,
+            var paidOrder = new PaidOrderProducts(
                 finalOrder.ProductList,
+                new ProductPrice(finalOrder.ProductList.Sum(p => p.totalPrice.Value)),
                 GenerateCsv(finalOrder),
-                command.OrderDate,                  // Pass order date from PublishOrderCommand
-                command.PaymentMethod,              // Pass payment method from PublishOrderCommand
-                command.TotalAmount,                // Pass total amount from PublishOrderCommand
-                command.ShippingAddress ?? string.Empty, // Pass shipping address or a default value
-                command.State,                      // Pass state from PublishOrderCommand
-                null                                // Optional OrderId, null at this stage
+                DateTime.Now,
+                finalOrder.ClientEmail
             );
+
             await orderRepository.SaveOrdersAsync(paidOrder);
 
-
-            // Step 5a: Add order items to the database
-            if (paidOrder.OrderId.HasValue)
-            {
-                foreach (var product in finalOrder.ProductList)
-                {
-                    await orderItemRepository.AddOrderItemAsync(paidOrder.OrderId.Value, product.ProductCode.Value, product.ProductPrice.Value);
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException("OrderId is required to save order items.");
-            }
-
             // Step 6: Publish the success event
-            logger.LogInformation("Order published successfully: {OrderId}", paidOrder.ProductList.FirstOrDefault()?.ProductDetailId ?? 0);
+            logger.LogInformation("Order published successfully: {ClientEmail}", finalOrder.ClientEmail.Value);
             return new OrderPublishSucceededEvent(
-                csv: GenerateCsv(finalOrder),
-                orderDetails: finalOrder.ProductList.Select(p => new CalculatedOrderDetail(
-                    p.ProductCode.Value,
-                    p.ProductPrice.Value,
-                    p.ProductQuantity.Value,
-                    p.TotalPrice
-                )).ToList()
+                finalOrder.ClientEmail,
+                GenerateCsv(finalOrder),
+                new ProductPrice(finalOrder.ProductList.Sum(p => p.totalPrice.Value)),
+                DateTime.Now
             );
         }
         catch (Exception ex)
@@ -131,11 +110,11 @@ public class PublishOrderWorkflow
         // Generate CSV from the order details
         var csvLines = new List<string>
         {
-            "ProductName,ProductCode,Price,Quantity,TotalPrice"
+            "ClientEmail,ProductCode,Price,Quantity,TotalPrice"
         };
 
         csvLines.AddRange(order.ProductList.Select(product =>
-            $"{product.ProductName.Value},{product.ProductCode.Value},{product.ProductPrice.Value:F2},{product.ProductQuantity.Value},{product.TotalPrice:F2}"));
+            $"{product.clientEmail.Value},{product.productCode.Value},{product.productPrice.Value:F2},{product.productQuantity.Value},{product.totalPrice.Value:F2}"));
 
         return string.Join(Environment.NewLine, csvLines);
     }

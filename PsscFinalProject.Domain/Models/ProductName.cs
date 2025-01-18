@@ -11,7 +11,7 @@ namespace PsscFinalProject.Domain.Models
         {
             public string Value { get; }
 
-            internal ProductName(string value)
+            public ProductName(string value)
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {

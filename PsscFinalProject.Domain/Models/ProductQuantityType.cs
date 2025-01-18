@@ -13,7 +13,7 @@ namespace PsscFinalProject.Domain.Models
 
             private static readonly string[] ValidTypes = { "Piece", "Kilogram", "Liter", "Unit" }; // Example valid types
 
-            internal ProductQuantityType(string value)
+            public ProductQuantityType(string value)
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {

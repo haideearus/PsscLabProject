@@ -1,96 +1,53 @@
-﻿using Microsoft.Extensions.Logging;
-using PsscFinalProject.Domain.Models;
+﻿using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Operations;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using static PsscFinalProject.Domain.Models.Order;
-using System.Runtime.CompilerServices;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
-[assembly: InternalsVisibleTo("PsscFinalProject.Tests")]
-
-
-namespace PsscFinalProject.Domain.Operations
+internal class CalculateOrderOperation : OrderOperation
 {
-    internal class CalculateOrderOperation : OrderOperation
+    internal CalculateOrderOperation() { }
+
+    public override IOrderProducts Transform(IOrderProducts? order, object? state)
     {
-        internal CalculateOrderOperation() { }
-
-        public override IOrder Transform(IOrder? order, object? state)
+        if (order == null)
         {
-            if (order == null)
-            {
-                throw new ArgumentNullException(nameof(order), "Order cannot be null");
-            }
-
-            return order switch
-            {
-                ValidatedOrder validatedOrder => OnValidated(validatedOrder),
-                _ => throw new InvalidOperationException("Unexpected order type")
-            };
+            throw new ArgumentNullException(nameof(order), "Order cannot be null");
         }
 
-
-        protected override IOrder OnValidated(ValidatedOrder validatedOrder)
+        return order switch
         {
-            if (validatedOrder == null)
-            {
-                throw new ArgumentNullException(nameof(validatedOrder), "Validated order cannot be null");
-            }
+            ValidatedOrderProducts validatedOrder => OnValidated(validatedOrder),
+            _ => throw new InvalidOperationException("Unexpected order type")
+        };
+    }
 
-            // Calculate total price for each product
-            var calculatedProducts = validatedOrder.ProductList
-                .Select(product =>
-                {
-                    var totalPrice = product.ProductPrice.Value * product.ProductQuantity.Value;
-                    return new CalculatedProduct(
-                        product.ProductName,
-                        product.ProductCode,
-                        product.ProductPrice,
-                        product.ProductQuantityType,
-                        product.ProductQuantity,
-                        totalPrice
-                    );
-                }).ToList();
-
-            // Calculate total order amount
-            var totalAmount = calculatedProducts.Sum(product => product.TotalPrice);
-
-            // Define default values for properties
-            const string defaultShippingAddress = "Default Address";
-            const int defaultPaymentMethod = 1; // Example: 1 for "Cash on Delivery"
-            const int orderState = 1; // Example: 1 for "Placed"
-
-            // Create and return a CalculatedOrder
-            return new CalculatedOrder(
-                productList: calculatedProducts.AsReadOnly(),
-                orderDate: DateTime.Now,
-                paymentMethod: defaultPaymentMethod,
-                totalAmount: totalAmount,
-                shippingAddress: defaultShippingAddress,
-                state: orderState,
-                clientEmail: validatedOrder.Email
-            );
+    protected override IOrderProducts OnValidated(ValidatedOrderProducts validatedOrder)
+    {
+        if (validatedOrder == null)
+        {
+            throw new ArgumentNullException(nameof(validatedOrder), "Validated order cannot be null");
         }
 
-
-        private static CalculatedProduct CalculateProduct(ValidatedProduct validatedProduct)
-        {
-            if (validatedProduct.ProductPrice.Value <= 0 || validatedProduct.ProductQuantity.Value <= 0)
+        // Calculate total price for each product
+        var calculatedProducts = validatedOrder.ProductList
+            .Select(product =>
             {
-                throw new InvalidOperationException($"Invalid product price or quantity for {validatedProduct.ProductCode.Value}");
-            }
+                var totalPrice = product.ProductQuantity.Value * 100; // Adjust price logic as needed
+                return new CalculatedProduct(
+                    clientEmail: product.ClientEmail,
+                    productCode: product.ProductCode,
+                    productPrice: new ProductPrice(100), // Replace with actual price
+                    productQuantityType: new ProductQuantityType("Unit"),
+                    productQuantity: product.ProductQuantity,
+                    totalPrice: new ProductPrice(totalPrice)
+                );
+            }).ToList();
 
-            var totalPrice = validatedProduct.ProductPrice.Value * validatedProduct.ProductQuantity.Value;
-
-            return new CalculatedProduct(
-                validatedProduct.ProductName,
-                validatedProduct.ProductCode,
-                validatedProduct.ProductPrice,
-                validatedProduct.ProductQuantityType,
-                validatedProduct.ProductQuantity,
-                totalPrice
-            );
-        }
-
+        // Create and return a CalculatedOrder
+        return new CalculatedOrder(
+            productList: calculatedProducts.AsReadOnly(),
+            clientEmail: validatedOrder.ProductList.First().ClientEmail
+        );
     }
 }

@@ -11,7 +11,7 @@ namespace PsscFinalProject.Domain.Models
     {
         public decimal Value { get; }
 
-        internal ProductPrice(decimal value)
+        public ProductPrice(decimal value)
         {
             if (value <= 0)
             {
