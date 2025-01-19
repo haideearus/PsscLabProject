@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using PsscFinalProject.Api.Models;
 using static PsscFinalProject.Domain.Models.OrderBilling;
 using PsscFinalProject.Data.Repositories;
+using static PsscFinalProject.Domain.Models.OrderDelivery;
 
 namespace PsscFinalProject.Api.Controllers
 {
@@ -26,6 +27,7 @@ namespace PsscFinalProject.Api.Controllers
         private readonly ILogger<ClientOrderController> logger;
         private readonly PublishOrderWorkflow publishOrderWorkflow;
         private readonly PublishBillingWorkflow publishBillingWorkflow;
+        private readonly PublishDeliveryWorkflow publishDeliveryWorkflow;
         private readonly IOrderRepository orderRepository; // Add this line
 
         // Modify the constructor to accept IOrderRepository
@@ -33,12 +35,14 @@ namespace PsscFinalProject.Api.Controllers
             ILogger<ClientOrderController> logger,
             PublishOrderWorkflow publishOrderWorkflow,
             PublishBillingWorkflow publishBillingWorkflow,
-            IOrderRepository orderRepository) // Add this line
+            IOrderRepository orderRepository,
+            PublishDeliveryWorkflow publishDeliveryWorkflow) // Add this line
         {
             this.logger = logger;
             this.publishOrderWorkflow = publishOrderWorkflow;
             this.publishBillingWorkflow = publishBillingWorkflow;
             this.orderRepository = orderRepository; // Assign the injected repository
+            this.publishDeliveryWorkflow = publishDeliveryWorkflow;
         }
 
         [HttpGet("getAllOrders")]
@@ -63,7 +67,6 @@ namespace PsscFinalProject.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while fetching orders.");
             }
         }
-
 
         [HttpPost("placeOrder")]
         public async Task<IActionResult> PlaceOrder([FromBody] IEnumerable<UnvalidatedOrder> unvalidatedOrders)
@@ -101,17 +104,45 @@ namespace PsscFinalProject.Api.Controllers
 
                         // Trigger the billing workflow
                         var billingResult = await publishBillingWorkflow.ExecuteAsync(unvalidatedBilling, new PaidOrderProducts(
-                            productsList: new List<CalculatedProduct>(), // Populate with relevant details
+                            productsList: new List<CalculatedProduct> { existingOrder }, // Wrapping existing order in a list
                             totalAmount: success.ProductPrice,
                             csv: success.Csv,
                             orderDate: success.PublishDate,
                             clientEmail: success.ClientEmail
                         ));
 
+                        if (billingResult is not PublishedOrderBilling publishedBilling)
+                        {
+                            return BadRequest(new
+                            {
+                                Message = "Order placed, but billing failed.",
+                                BillingStatus = "Billing failed."
+                            });
+                        }
+
+                        // Use the same OrderId for the delivery workflow
+                        var unvalidatedDelivery = new UnvalidatedOrderDelivery(new List<UnvalidatedDelivery>
+                {
+                    new UnvalidatedDelivery(
+                        TrackingNumber.Generate().Value,
+                        "Sameday" // Example courier, this can be dynamic or user-provided
+                    )
+                }.AsReadOnly());
+
+                        // Trigger the delivery workflow
+                        var deliveryResult = await publishDeliveryWorkflow.ExecuteAsync(unvalidatedDelivery, new PaidOrderProducts(
+                            productsList: new List<CalculatedProduct> { existingOrder }, // Wrapping existing order in a list
+                            totalAmount: success.ProductPrice,
+                            csv: success.Csv,
+                            orderDate: success.PublishDate,
+                            clientEmail: success.ClientEmail
+                        ), existingOrder.OrderId); // Pass OrderId
+
                         return Ok(new
                         {
                             Message = "Order placed successfully.",
-                            BillingStatus = billingResult is PublishedOrderBilling ? "Billing succeeded." : "Billing failed."
+                            BillingStatus = "Billing succeeded.",
+                            DeliveryStatus = deliveryResult is PublishedOrderDelivery ? "Delivery succeeded." : "Delivery failed."
                         });
 
                     case OrderPublishFailedEvent failure:
@@ -128,53 +159,6 @@ namespace PsscFinalProject.Api.Controllers
             {
                 logger.LogError(ex, "An error occurred while placing the order.");
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while placing the order.");
-            }
-        }
-
-
-
-
-        private async Task<bool> TriggerBilling(OrderPublishSucceededEvent succeededEvent)
-        {
-            try
-            {
-                // Assuming the client's email is already in the succeededEvent
-                var bills = new[]
-                {
-            new InputBills
-            {
-                BillAddress = "Default Address", // You can replace this with a dynamic value if needed
-                BillNumber = "GeneratedBillNumber", // Replace with actual logic to generate a bill number
-                ClientEmail = succeededEvent.ClientEmail
-            }
-        };
-
-                using (var httpClient = new HttpClient())
-                {
-                    var requestContent = new StringContent(
-                        JsonConvert.SerializeObject(bills),
-                        Encoding.UTF8,
-                        "application/json"
-                    );
-
-                    // Adjust the URL to point to the actual billing service endpoint
-                    var response = await httpClient.PostAsync("https://localhost:7195/Bill", requestContent);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        logger.LogError($"Failed to trigger billing: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
-                        return false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error occurred while triggering billing.");
-                return false;
             }
         }
 

@@ -1,83 +1,82 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Logging;
+using PsscFinalProject.Domain.Operations;
+using PsscFinalProject.Domain.Repositories;
+using static PsscFinalProject.Domain.Models.OrderDelivery;
+using static PsscFinalProject.Domain.Models.OrderProducts;
+using System.Threading.Tasks;
+using System.Linq;
+using System;
+using System.Collections.Generic;
 
-//namespace PsscFinalProject.Domain.Workflows
-//{
-//    internal class DeliverOrderWorkflow
-//    {
-//        private readonly ApiService _apiService;
-//    }
-//    public async Task ProcessOrderAsync(int orderId)
-//        {
-//            var order = await _apiClient.GetOrderAsync(orderId);
-//            if (!ValidateCustomer(order.Customer))
-//            {
-//                Console.WriteLine("Validation failed: Customer data incomplete.");
-//                return;
-//            }
-//            Console.WriteLine("Customer data validated.");
+public class PublishDeliveryWorkflow
+{
+    private readonly IOrderRepository orderRepository;
+    private readonly IDeliveryRepository deliveryRepository;
+    private readonly ILogger<PublishDeliveryWorkflow> logger;
 
-//            Console.WriteLine("Starting packaging process...");
-//            await SimulateTask("Packaging");
-//            Console.WriteLine("Packaging verified.");
+    public PublishDeliveryWorkflow(
+        IOrderRepository orderRepository,
+        IDeliveryRepository deliveryRepository,
+        ILogger<PublishDeliveryWorkflow> logger)
+    {
+        this.orderRepository = orderRepository;
+        this.deliveryRepository = deliveryRepository;
+        this.logger = logger;
+    }
 
-//            var packageDetails = new PackageDetails { Dimensions = "30x20x10", Weight = 5.0 };
-//            order.PackageDetails = packageDetails;
-//            Console.WriteLine("Notifying courier...");
-//            var awb = NotifyCourier(packageDetails);
+    public async Task<IOrderDelivery> ExecuteAsync(UnvalidatedOrderDelivery unvalidatedDelivery, PaidOrderProducts paidOrder, int orderId)
+    {
+        try
+        {
+            // Step 1: Log details from PaidOrderProducts
+            logger.LogInformation("Using paid order details: {ClientEmail}, {OrderDate}, {OrderId}",
+                paidOrder.ClientEmail.Value, paidOrder.OrderDate, orderId);
 
-//            Console.WriteLine("Waiting for courier confirmation...");
-//            await Task.Delay(2000); // Simulate wait time
-//            Console.WriteLine($"Courier confirmed. AWB: {awb}");
+            // Step 2: Validate the deliveries
+            var validateDeliveryOperation = new ValidateDeliveryOperation();
+            var validatedDelivery = validateDeliveryOperation.Transform(unvalidatedDelivery, null);
 
-//            await _apiClient.AddAWBToOrderAsync(orderId, awb);
-//            await _apiClient.UpdateOrderStatusAsync(orderId, OrderStatus.InTransit);
-//            Console.WriteLine("Tracking order...");
+            if (validatedDelivery is InvalidOrderDelivery invalidDelivery)
+            {
+                logger.LogWarning("Delivery validation failed: {Reasons}", string.Join(", ", invalidDelivery.Reasons));
+                return invalidDelivery;
+            }
 
-//            Console.WriteLine("Order delivered. Generating warranty...");
-//            var warranty = GenerateWarranty("electronics");
-//            Console.WriteLine($"Warranty: {warranty}");
+            // Step 3: Calculate delivery details
+            var calculateDeliveryOperation = new CalculateDeliveryOperation();
+            var calculatedDelivery = calculateDeliveryOperation.Transform(validatedDelivery, null);
 
-//            NotifyCustomer(order.Customer, "Order delivered and warranty issued.");
-//        }
+            if (calculatedDelivery is not CalculatedOrderDelivery calculated)
+            {
+                logger.LogError("Delivery calculation failed.");
+                return new FailedOrderDelivery(unvalidatedDelivery.DeliveryList, new Exception("Failed to calculate deliveries."));
+            }
 
-//        private bool ValidateCustomer(Customer customer)
-//        {
-//            return !string.IsNullOrEmpty(customer.FirstName) &&
-//                   !string.IsNullOrEmpty(customer.LastName) &&
-//                   !string.IsNullOrEmpty(customer.Email) &&
-//                   !string.IsNullOrEmpty(customer.PhoneNumber);
-//        }
+            // Step 4: Transform to PublishedOrderDelivery
+            logger.LogInformation("Transforming to PublishedOrderDelivery.");
+            var csvContent = GenerateCsv(calculated, paidOrder);
+            var publishedDelivery = new PublishedOrderDelivery(calculated.DeliveryList, csvContent, DateTime.UtcNow);
 
-//        private async Task SimulateTask(string taskName)
-//        {
-//            Console.WriteLine($"{taskName} in progress...");
-//            await Task.Delay(2000); // Simulate delay
-//            Console.WriteLine($"{taskName} completed.");
-//        }
+            // Step 5: Save PublishedOrderDelivery to the database
+            logger.LogInformation("Saving PublishedOrderDelivery to the database.");
+            await deliveryRepository.SaveDeliveries(publishedDelivery);
 
-//        private string NotifyCourier(PackageDetails packageDetails)
-//        {
-//            Console.WriteLine($"Sending package details to courier: Dimensions={packageDetails.Dimensions}, Weight={packageDetails.Weight}kg.");
-//            return Guid.NewGuid().ToString(); // Simulated AWB
-//        }
+            // Step 6: Return the published delivery
+            logger.LogInformation("Delivery workflow completed successfully.");
+            return publishedDelivery;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred during the delivery workflow.");
+            return new FailedOrderDelivery(unvalidatedDelivery.DeliveryList, ex);
+        }
+    }
 
-//        private string GenerateWarranty(string productType)
-//        {
-//            return productType switch
-//            {
-//                "food" => "2 days",
-//                "electronics" => "2 years",
-//                _ => "30 days"
-//            };
-//        }
-
-//        private void NotifyCustomer(Customer customer, string message)
-//        {
-//            Console.WriteLine($"Sending notification to {customer.Email}: {message}");
-//        }
-//    }
-//}
+    private string GenerateCsv(CalculatedOrderDelivery calculatedDelivery, PaidOrderProducts paidOrder)
+    {
+        var csvLines = new List<string> { "TrackingNumber,Courier,ClientEmail,TotalAmount" };
+        csvLines.AddRange(calculatedDelivery.DeliveryList.Select(delivery =>
+            $"{delivery.TrackingNumber.Value},{delivery.Courier.Value},{paidOrder.ClientEmail.Value},{paidOrder.TotalAmount.Value:F2}"));
+        return string.Join(Environment.NewLine, csvLines);
+    }
+}

@@ -8,7 +8,7 @@ namespace PsscFinalProject.Domain.Repositories
 {
     public interface IDeliveryRepository
     {
-       Task<List<CalculatedTrackingNumber>> GetDeliveriesAsync();
+       Task<List<CalculatedTrackingNumber>> GetExistingDeliveriesAsync();
        Task SaveDeliveries(PublishedOrderDelivery deliveries);
     }
 }

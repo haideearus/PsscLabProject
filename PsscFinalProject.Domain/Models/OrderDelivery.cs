@@ -46,43 +46,37 @@ namespace PsscFinalProject.Domain.Models
 
         public record ValidatedOrderDelivery : IOrderDelivery
         {
-            //private List<ValidatedShipp> validatedShippings;
 
-            //public ValidatedOrderDelivery(List<ValidatedShipp> validatedShippings)
-            //{
-            //    this.validatedShippings = validatedShippings;
-            //}
+            internal ValidatedOrderDelivery(IReadOnlyCollection<ValidatedDelivery> deliveryList)
+            {
+                DeliveryList = deliveryList;
+            }
 
-            //internal ValidatedOrderDelivery(IReadOnlyCollection<ValidatedShipping> shippingList)
-            //{
-            //    ShippingList = shippingList;
-            //}
-
-            //public IReadOnlyCollection<ValidatedShipping> ShippingList { get; }
+            public IReadOnlyCollection<ValidatedDelivery> DeliveryList { get; }
         }
 
         public record CalculatedOrderDelivery : IOrderDelivery
         {
-            //internal CalculatedOrderDelivery(IReadOnlyCollection<CalculatedShipping> shippingList)
-            //{
-            //    ShippingList = shippingList;
-            //}
+            internal CalculatedOrderDelivery(IReadOnlyCollection<CalculatedTrackingNumber> deliveryList)
+            {
+                DeliveryList = deliveryList;
+            }
 
-            //public IReadOnlyCollection<CalculatedShipping> ShippingList { get; }
+            public IReadOnlyCollection<CalculatedTrackingNumber> DeliveryList { get; }
         }
 
         public record PublishedOrderDelivery : IOrderDelivery
         {
-            //internal PublishedOrderDelivery(IReadOnlyCollection<CalculatedShipping> shippingList, string csv, DateTime publishedDate)
-            //{
-            //    ShippingList = shippingList;
-            //    PublishedDate = publishedDate;
-            //    Csv = csv;
-            //}
+            internal PublishedOrderDelivery(IReadOnlyCollection<CalculatedTrackingNumber> deliveryList, string csv, DateTime publishedDate)
+            {
+                DeliveryList = deliveryList;
+                PublishedDate = publishedDate;
+                Csv = csv;
+            }
 
-            //public IReadOnlyCollection<CalculatedShipping> ShippingList { get; }
-            //public DateTime PublishedDate { get; }
-            //public string Csv { get; }
+            public IReadOnlyCollection<CalculatedTrackingNumber> DeliveryList { get; }
+            public DateTime PublishedDate { get; }
+            public string Csv { get; }
         }
     }
 }

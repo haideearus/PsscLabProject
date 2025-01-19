@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    internal class DeliveryPublishedEvent
+    public static class DeliveryPublishedEvent
     {
+        public interface IDeliveryPublishedEvent { }
+
+        public record DeliveryPublishedEventSucceededEvent(string Csv, DateTime PublishDate) : IDeliveryPublishedEvent;
+
+        public record DeliveryPublishedEventFailedEvent(IEnumerable<string> Reasons) : IDeliveryPublishedEvent;
     }
 }
