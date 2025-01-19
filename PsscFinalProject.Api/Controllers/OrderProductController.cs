@@ -13,6 +13,8 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
 using PsscFinalProject.Api.Models;
+using static PsscFinalProject.Domain.Models.OrderBilling;
+using PsscFinalProject.Data.Repositories;
 
 namespace PsscFinalProject.Api.Controllers
 {
@@ -20,13 +22,23 @@ namespace PsscFinalProject.Api.Controllers
     [Route("[controller]")]
     public class ClientOrderController : ControllerBase
     {
+
         private readonly ILogger<ClientOrderController> logger;
         private readonly PublishOrderWorkflow publishOrderWorkflow;
+        private readonly PublishBillingWorkflow publishBillingWorkflow;
+        private readonly IOrderRepository orderRepository; // Add this line
 
-        public ClientOrderController(ILogger<ClientOrderController> logger, PublishOrderWorkflow publishOrderWorkflow)
+        // Modify the constructor to accept IOrderRepository
+        public ClientOrderController(
+            ILogger<ClientOrderController> logger,
+            PublishOrderWorkflow publishOrderWorkflow,
+            PublishBillingWorkflow publishBillingWorkflow,
+            IOrderRepository orderRepository) // Add this line
         {
             this.logger = logger;
             this.publishOrderWorkflow = publishOrderWorkflow;
+            this.publishBillingWorkflow = publishBillingWorkflow;
+            this.orderRepository = orderRepository; // Assign the injected repository
         }
 
         [HttpGet("getAllOrders")]
@@ -52,37 +64,6 @@ namespace PsscFinalProject.Api.Controllers
             }
         }
 
-        //[HttpPost("placeOrder")]
-        //public async Task<IActionResult> PlaceOrder([FromBody] IEnumerable<UnvalidatedOrder> unvalidatedOrders)
-        //{
-        //    try
-        //    {
-        //        var command = new PublishOrderCommand(unvalidatedOrders.ToList().AsReadOnly());
-        //        var result = await publishOrderWorkflow.ExecuteAsync(command);
-
-        //        return result switch
-        //        {
-        //            OrderPublishSucceededEvent success => Ok(new
-        //            {
-        //                success.ClientEmail,
-        //                success.Csv,
-        //                success.ProductPrice.Value,
-        //                success.PublishDate
-        //            }),
-        //            OrderPublishFailedEvent failure => BadRequest(new
-        //            {
-        //                Errors = failure.Reasons
-        //            }),
-        //            _ => StatusCode(StatusCodes.Status500InternalServerError, "Unknown result.")
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError(ex, "An error occurred while placing the order.");
-        //        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while placing the order.");
-        //    }
-        //}
-
 
         [HttpPost("placeOrder")]
         public async Task<IActionResult> PlaceOrder([FromBody] IEnumerable<UnvalidatedOrder> unvalidatedOrders)
@@ -95,12 +76,42 @@ namespace PsscFinalProject.Api.Controllers
                 switch (result)
                 {
                     case OrderPublishSucceededEvent success:
-                        // Trigger additional operations after success
-                        var billingTriggered = await TriggerBilling(success);
+                        // Retrieve the existing orders from the database
+                        var existingOrders = await orderRepository.GetExistingOrdersAsync();
+
+                        // Find the order matching the client's email
+                        var existingOrder = existingOrders.FirstOrDefault(o => o.clientEmail.Value == success.ClientEmail.Value);
+
+                        if (existingOrder == null)
+                        {
+                            return NotFound($"Order for client {success.ClientEmail} not found.");
+                        }
+
+                        // Extract the shipping address
+                        var shippingAddress = "Oras Arad, Strada Garii, nr. 124";
+
+                        // Generate a valid bill number
+                        var billNumber = BillNumber.Generate();
+
+                        // Create unvalidated bills from the successful order
+                        var unvalidatedBilling = new UnvalidatedOrderBilling(new List<UnvalidatedBill>
+                {
+                    new UnvalidatedBill(billNumber.Value, shippingAddress, success.ProductPrice.Value)
+                }.AsReadOnly());
+
+                        // Trigger the billing workflow
+                        var billingResult = await publishBillingWorkflow.ExecuteAsync(unvalidatedBilling, new PaidOrderProducts(
+                            productsList: new List<CalculatedProduct>(), // Populate with relevant details
+                            totalAmount: success.ProductPrice,
+                            csv: success.Csv,
+                            orderDate: success.PublishDate,
+                            clientEmail: success.ClientEmail
+                        ));
+
                         return Ok(new
                         {
                             Message = "Order placed successfully.",
-                            BillingStatus = billingTriggered ? "Billing succeeded." : "Billing failed."
+                            BillingStatus = billingResult is PublishedOrderBilling ? "Billing succeeded." : "Billing failed."
                         });
 
                     case OrderPublishFailedEvent failure:
@@ -119,6 +130,9 @@ namespace PsscFinalProject.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while placing the order.");
             }
         }
+
+
+
 
         private async Task<bool> TriggerBilling(OrderPublishSucceededEvent succeededEvent)
         {

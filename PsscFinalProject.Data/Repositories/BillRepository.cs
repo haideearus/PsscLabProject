@@ -18,16 +18,67 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-       public async Task<List<CalculatedBillNumber>> GetAll()
+        // Retrieve all bills associated with their orders
+        public async Task<List<CalculatedBillNumber>> GetAll()
         {
-            await dbContext.SaveChangesAsync();
-            return new List<CalculatedBillNumber>(); //fake doar sa nu am eroare 
+            // Load bills and join them with orders
+            var bills = await (
+                from b in dbContext.Bills
+                join o in dbContext.Orders on b.OrderId equals o.OrderId
+                select new
+                {
+                    b.BillId,
+                    b.BillNumber,
+                    o.ShippingAddress,
+                    o.TotalAmount
+                }
+            ).ToListAsync();
+
+            // Map results to the domain model
+            var calculatedBills = bills.Select(result => new CalculatedBillNumber(
+                ShippingAddress: new(result.ShippingAddress),    // Order's address
+                BillNumber: new(result.BillNumber),              // Bill number
+                ProductPrice: new(result.TotalAmount)             // Order's total amount
+            )
+            {
+                BillId = result.BillId // Bill ID
+            }).ToList();
+
+            return calculatedBills;
         }
 
-        
+        // Save new bills and associate them with existing orders
+        // Save new bills and associate them with the most recently added order
         public async Task SaveBills(PublishedOrderBilling bills)
         {
-            await dbContext.SaveChangesAsync();//provizoriu
+            // Retrieve the most recently added order
+            var mostRecentOrder = await dbContext.Orders
+                .OrderByDescending(o => o.OrderDate) // Assuming OrderDate or equivalent timestamp field exists
+                .FirstOrDefaultAsync();
+
+            if (mostRecentOrder == null)
+            {
+                throw new InvalidOperationException("No orders found in the database to associate with the bills.");
+            }
+
+            // Iterate through the bills and associate them with the most recent order
+            foreach (var bill in bills.BillList)
+            {
+                // Create a new Bill entity
+                var newBill = new BillDto
+                {
+                    OrderId = mostRecentOrder.OrderId, // Use the most recent order's ID
+                    BillNumber = BillNumber.Generate().Value, // Generate a unique bill number
+                    BillingDate = DateTime.Now,
+                    TotalAmount = mostRecentOrder.TotalAmount // Use the total amount from the most recent order
+                };
+
+                await dbContext.Bills.AddAsync(newBill);
+            }
+
+            // Save changes to the database
+            await dbContext.SaveChangesAsync();
         }
+
     }
 }

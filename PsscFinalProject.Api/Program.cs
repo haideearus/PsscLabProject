@@ -23,10 +23,11 @@ namespace PsscFinalProject.Api
 
             // Register repositories with the DI container
             builder.Services.AddScoped<PublishOrderWorkflow>();
+            builder.Services.AddScoped<PublishBillingWorkflow>();
             builder.Services.AddScoped<IClientRepository, ClientRepository>();
+            builder.Services.AddScoped<IBillRepository, BillRepository>();
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
-            //builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
             // Add Service Bus event sender

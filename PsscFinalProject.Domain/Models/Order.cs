@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("PsscFinalProject.Tests")]
-
+[assembly: InternalsVisibleTo("PsscFinalProject.Api")]
 
 namespace PsscFinalProject.Domain.Models
 {

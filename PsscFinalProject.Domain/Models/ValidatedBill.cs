@@ -6,7 +6,5 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public class ValidatedBill
-    {
-    }
+    public record ValidatedBill(BillNumber BillNumber, ShippingAddress ShippingAddress, ProductPrice TotalAmount);
 }

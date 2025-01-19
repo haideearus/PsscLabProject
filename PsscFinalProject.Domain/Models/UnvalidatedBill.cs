@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public class UnvalidatedBill
-    {
-    }
+  
+        public record UnvalidatedBill(string BillNumber, string ShippingAddress, decimal TotalAmount);
+
+
 }

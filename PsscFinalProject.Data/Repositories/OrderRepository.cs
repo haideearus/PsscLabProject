@@ -57,7 +57,7 @@ namespace PsscFinalProject.Data.Repositories
                 OrderDate = paidOrder.OrderDate,
                 PaymentMethod = 1, // Example value
                 TotalAmount = paidOrder.TotalAmount.Value,
-                ShippingAddress = "Default Address", // Example value
+                ShippingAddress = "Oras Arad, Starda Garii, nr. 124", // Example value
                 State = 1, // Example value
                 ClientEmail = paidOrder.ClientEmail.Value // Ensure this maps correctly
             };
@@ -89,5 +89,7 @@ namespace PsscFinalProject.Data.Repositories
             // Save all order items in one operation
             await dbContext.SaveChangesAsync();
         }
+
+        
     }
 }

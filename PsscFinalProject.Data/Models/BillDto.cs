@@ -17,6 +17,8 @@ public partial class BillDto
 
     public DateTime BillingDate { get; set; }
 
+    public string BillNumber { get; set; }
+
     [JsonIgnore]
     public virtual OrderDto? Order { get; set; }
 }

@@ -45,6 +45,7 @@ public partial class PsscDbContext : DbContext
             entity.Property(e => e.BillingDate).HasColumnType("datetime");
             entity.Property(e => e.OrderId).HasColumnName("Order_ID");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.BillNumber).HasMaxLength(50).IsUnicode(false);
 
             //entity.HasOne(d => d.Order).WithMany(p => p.Bills)
             //    .HasForeignKey(d => d.OrderId)
