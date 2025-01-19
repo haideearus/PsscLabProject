@@ -31,6 +31,7 @@ namespace PsscFinalProject.Api
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+            builder.Services.AddScoped<CalculateOrderOperation>();
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();

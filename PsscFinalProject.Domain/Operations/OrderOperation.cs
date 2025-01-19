@@ -5,7 +5,7 @@ using static PsscFinalProject.Domain.Models.OrderProducts;
 namespace PsscFinalProject.Domain.Operations
 {
     // Base class (OrderOperation<TState>)
-    internal abstract class OrderOperation<TState> : DomainOperation<IOrderProducts, TState, IOrderProducts>
+    public abstract class OrderOperation<TState> : DomainOperation<IOrderProducts, TState, IOrderProducts>
         where TState : class
     {
         public override IOrderProducts Transform(IOrderProducts? order, TState? state)
@@ -41,7 +41,7 @@ namespace PsscFinalProject.Domain.Operations
     }
 
     // Derived class (OrderOperation)
-    internal abstract class OrderOperation : OrderOperation<object>
+    public abstract class OrderOperation : OrderOperation<object>
     {
         internal IOrderProducts Transform(IOrderProducts order) => Transform(order, null);
 
