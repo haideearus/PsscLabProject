@@ -25,15 +25,16 @@ namespace PsscFinalProject.Api.Controllers
         }
 
         // GET: api/users/{id}
-        [HttpGet("{id}")]
-        public ActionResult<UserDto> GetUser(int id)
+        [HttpGet("{username}")]
+        public ActionResult<UserDto> GetUser(string username)
         {
-            var user = _userService.Users.FindAsync(id);
+            var user = _userService.Users.FindAsync(username);
+            Console.WriteLine(user.Result);
             if (user.IsCompleted)
             {
-                return NotFound($"User with ID {id} not found.");
+                return NotFound($"User with ID {username} not found.");
             }
-            return Ok(user);
+            return Ok(username);
         }
 
         // POST: api/users

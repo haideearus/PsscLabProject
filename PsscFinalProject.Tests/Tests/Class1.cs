@@ -6,7 +6,7 @@ using System.Linq;
 using PsscFinalProject.Domain.Operations;
 using System.Text;
 using System.Threading.Tasks;
-using static PsscFinalProject.Domain.Models.Order;
+using PsscFinalProject.Domain.Models;
 using Assert = NUnit.Framework.Assert;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -43,8 +43,8 @@ namespace PsscFinalProject.Tests.Tests
 
             var result = operation.Transform(validatedOrder);
 
-            Assert.That(result, Is.InstanceOf<CalculatedOrder>());
-            Assert.That(((CalculatedOrder)result).TotalAmount, Is.EqualTo(14.94M));
+            Assert.That(result, Is.InstanceOf<OrderProducts.CalculatedOrder>());
+            Assert.That(((OrderProducts.CalculatedOrder)result).TotalAmount, Is.EqualTo(14.94M));
         }
 
         [Test]
@@ -66,8 +66,8 @@ namespace PsscFinalProject.Tests.Tests
             var result = operation.Transform(validatedOrder);
 
             // Assert
-            Assert.That(result, Is.InstanceOf<CalculatedOrder>(), "The result should be a CalculatedOrder.");
-            var calculatedOrder = (CalculatedOrder)result;
+            Assert.That(result, Is.InstanceOf<OrderProducts.CalculatedOrder>(), "The result should be a CalculatedOrder.");
+            var calculatedOrder = (OrderProducts.CalculatedOrder)result;
 
             Assert.That(calculatedOrder.TotalAmount, Is.EqualTo(40m), "Total amount should match the expected value.");
             Assert.That(calculatedOrder.ShippingAddress, Is.EqualTo("Default Address"), "Shipping address should be the default value.");

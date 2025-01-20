@@ -1,4 +1,4 @@
-using PsscFinalProject.Data.Models;
+﻿using PsscFinalProject.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +28,20 @@ namespace PsscFinalProject.Data.Repositories
             return users.Select(users => new ClientEmail(users.Email))
                           .ToList();
         }
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            var userDtos = await dbContext.Users.AsNoTracking().ToListAsync();
+
+            // Mapează UserDto la User
+            var users = userDtos.Select(dto => new User
+            {
+                UserName = dto.Username,
+                Password = dto.Password,
+                // Adaugă alte câmpuri necesare aici
+            }).ToList();
+            return users;
+        }
+
 
     }
 }

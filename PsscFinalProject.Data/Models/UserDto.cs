@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace PsscFinalProject.Data.Models;
-
-public partial class UserDto
+namespace PsscFinalProject.Data.Models
 {
-    public string Username { get; set; } = null!;
 
-    public string Password { get; set; } = null!;
+    public partial class UserDto
+    {
+        public string Username { get; set; }
 
-    [Key]
-    public string Email { get; set; } = null!;
+        public string Password { get; set; }
 
-    [JsonIgnore]
-    public virtual ClientDto? Client { get; set; }
+        [Key] public string Email { get; set; } = null!;
+
+        [JsonIgnore] public virtual ClientDto? Client { get; set; }
+    }
 }
