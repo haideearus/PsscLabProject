@@ -17,19 +17,22 @@ public class PublishOrderWorkflow
     private readonly IProductRepository productRepository;
     private readonly IOrderItemRepository orderItemRepository;
     private readonly ILogger<PublishOrderWorkflow> logger;
+    private readonly CalculateOrderOperation calculateOrderOperation;
 
     public PublishOrderWorkflow(
         IClientRepository clientRepository,
         IOrderRepository orderRepository,
         IProductRepository productRepository,
         IOrderItemRepository orderItemRepository,
-        ILogger<PublishOrderWorkflow> logger)
+        ILogger<PublishOrderWorkflow> logger,
+        CalculateOrderOperation calculateOrderOperation)
     {
         this.clientRepository = clientRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.orderItemRepository = orderItemRepository;
         this.logger = logger;
+        this.calculateOrderOperation = calculateOrderOperation;
     }
 
     public async Task<IOrderPublishEvent> ExecuteAsync(PublishOrderCommand command)
@@ -68,8 +71,7 @@ public class PublishOrderWorkflow
                 return new OrderPublishFailedEvent(invalidOrder.Reasons.ToList());
             }
 
-            // Step 4: Calculate total price and prepare the order
-            var calculateOrderOperation = new CalculateOrderOperation();
+            var calculateOrderOperation = new CalculateOrderOperation(orderItemRepository);
             var calculatedOrder = calculateOrderOperation.Transform((ValidatedOrderProducts)validatedOrder);
 
             if (calculatedOrder is not CalculatedOrder finalOrder)

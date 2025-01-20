@@ -1,12 +1,19 @@
 ﻿using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Operations;
+using PsscFinalProject.Domain.Repositories;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using static PsscFinalProject.Domain.Models.OrderProducts;
 
-internal class CalculateOrderOperation : OrderOperation
+public class CalculateOrderOperation : OrderOperation
 {
-    internal CalculateOrderOperation() { }
+    private readonly IOrderItemRepository _orderItemRepository;
+
+    public CalculateOrderOperation(IOrderItemRepository orderItemRepository)
+    {
+        _orderItemRepository = orderItemRepository;
+    }
 
     public override IOrderProducts Transform(IOrderProducts? order, object? state)
     {
@@ -29,24 +36,29 @@ internal class CalculateOrderOperation : OrderOperation
             throw new ArgumentNullException(nameof(validatedOrder), "Validated order cannot be null");
         }
 
-        // Calculate total price for each product
-        var calculatedProducts = validatedOrder.ProductList
-            .Select(product =>
-            {
-                var totalPrice = product.ProductQuantity.Value * 100; // Adjust price logic as needed
-                return new CalculatedProduct(
-                    clientEmail: product.ClientEmail,
-                    productCode: product.ProductCode,
-                    productPrice: new ProductPrice(100), // Replace with actual price
-                    productQuantityType: new ProductQuantityType("Unit"),
-                    productQuantity: product.ProductQuantity,
-                    totalPrice: new ProductPrice(totalPrice)
-                );
-            }).ToList();
+        var calculatedProducts = _orderItemRepository.GetProductsAsync().Result; 
 
-        // Create and return a CalculatedOrder
+        var mappedProducts = validatedOrder.ProductList.Select(validatedProduct =>
+        {
+            var product = calculatedProducts.FirstOrDefault(p => p.productCode == validatedProduct.ProductCode);
+
+            if (product == null)
+            {
+                throw new ArgumentException($"Product with code {validatedProduct.ProductCode.Value} not found in database");
+            }
+
+            return new CalculatedProduct(
+                clientEmail: validatedProduct.ClientEmail,
+                productCode: validatedProduct.ProductCode,
+                productPrice: product.productPrice,
+                productQuantityType: product.productQuantityType,
+                productQuantity: validatedProduct.ProductQuantity,
+                totalPrice: new ProductPrice(product.productPrice.Value * validatedProduct.ProductQuantity.Value)
+            );
+        }).ToList();
+
         return new CalculatedOrder(
-            productList: calculatedProducts.AsReadOnly(),
+            productList: mappedProducts.AsReadOnly(),
             clientEmail: validatedOrder.ProductList.First().ClientEmail
         );
     }
