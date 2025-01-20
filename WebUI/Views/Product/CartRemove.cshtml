@@ -24,14 +24,14 @@
                 <td>@item.Product.Price</td>
                 <td>
                     <form asp-action="CartRemove" method="post">
-                            <input type="hidden" name="productId" value="@item.Product.Id" />
-                            <input type="hidden" name="productPrice" value="@item.Product.Price" />
+                        <input type="hidden" name="productId" value="@item.Product.Id" />
+                        <input type="hidden" name="productPrice" value="@item.Product.Price" />
                         <button type="submit" class="btn btn-primary">Remove</button>
                     </form>
                 </td>
             </tr>
         }
-    <a asp-action="Index" class="btn btn-primary">Înapoi la Index</a>
+            <a asp-action="Index" class="btn btn-primary">Înapoi la Index</a>
         </tbody>
     </table>
 

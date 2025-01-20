@@ -22,9 +22,11 @@
             <td>@product.Name</td>
             <td>@product.Price</td>
             <td>
-                <form asp-action="AddToCart" method="post">
+                <form asp-action="Cart" method="post">
                     <input type="hidden" name="productId" value="@product.Id" />
-                    <button type="submit" class="btn btn-primary">Adaugă în coș</button>
+                        <input type="hidden" name="productPrice" value="@product.Price" />
+                        <input type="hidden" name="productName" value="@product.Name" />
+                    <button type="submit" class="btn btn-primary">Add 1 quantity</button>
                 </form>
             </td>
         </tr>

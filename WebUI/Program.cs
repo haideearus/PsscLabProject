@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PsscFinalProject.Data;
@@ -23,12 +23,11 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
+
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
-
 builder.Services.AddDbContext<PsscDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<CartService>();
 builder.Services.AddHttpClient<ApiService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7195/"); // Adauga URL-ul bazei API
