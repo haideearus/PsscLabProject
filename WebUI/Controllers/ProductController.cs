@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
+using Newtonsoft.Json;
 using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
+using System.Text;
 using WebUI.Models;
 using WebUI.Services;
 
@@ -66,6 +68,46 @@ namespace WebUI.Controllers
             ViewBag.Total = total + productPrice;
             return View(cartItems);
         }
+        [HttpPost]
+        public async Task<IActionResult> PlaceOrder(string email)
+        {
+            var cartItems = CartService.GetCartItems();
+            // Creează lista de produse și pregătește obiectul JSON
+            var orderItems = cartItems.Select(item => new
+            {
+                clientEmail = email,
+                productCode = item.Product.Id,
+                quantity = item.Quantity
+            }).ToList();
+
+            // Trimite cererea JSON către API-ul extern
+            using (var client = new HttpClient())
+            {
+                var jsonContent = JsonConvert.SerializeObject(orderItems);
+                Console.WriteLine(jsonContent);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("https://localhost:7195/ClientOrder/placeOrder", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Comanda a fost procesată cu succes
+                    return RedirectToAction("OrderSuccess");
+                }
+                else
+                {
+                    // Există o eroare
+                    ModelState.AddModelError(string.Empty, "A apărut o eroare la plasarea comenzii.");
+                    return View("Cart", CartService.GetCartItems()); // Sau redirecționează la pagina coșului
+                }
+            }
+        }
+        public IActionResult OrderSuccess()
+        {
+            CartService.ClearCart();
+            return View();
+        }
+
     }
 }
 
