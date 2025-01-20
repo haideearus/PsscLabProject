@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
+using PsscFinalProject.Domain.Operations;
 
 
 namespace PsscFinalProject.Api
@@ -32,6 +33,8 @@ namespace PsscFinalProject.Api
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
             builder.Services.AddScoped<CalculateOrderOperation>();
+            builder.Services.AddScoped<OrderStateOperation>();
+
 
             // Add Service Bus event sender
             builder.Services.AddSingleton<IEventSender, ServiceBusTopicEventSender>();

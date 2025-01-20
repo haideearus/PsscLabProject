@@ -45,6 +45,8 @@ namespace PsscFinalProject.Api.Controllers
             this.publishDeliveryWorkflow = publishDeliveryWorkflow;
         }
 
+        //get orders by email
+
         [HttpGet("getAllOrders")]
         public async Task<IActionResult> GetAllOrders([FromServices] IOrderRepository orderRepository)
         {
@@ -65,6 +67,34 @@ namespace PsscFinalProject.Api.Controllers
             {
                 logger.LogError(ex, "An error occurred while fetching orders.");
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while fetching orders.");
+            }
+        }
+
+        [HttpGet("getOrdersByEmail/{email}")]
+        public async Task<IActionResult> GetOrdersByEmail(string email)
+        {
+            try
+            {
+                var orders = await orderRepository.GetOrdersByEmailAsync(email);
+
+                if (orders == null || !orders.Any())
+                {
+                    return NotFound(new { Message = $"No orders found for email {email}." });
+                }
+
+                return Ok(orders.Select(order => new
+                {
+                    ClientEmail = order.clientEmail.Value,
+                    ProductCode = order.productCode.Value,
+                    ProductPrice = order.productPrice.Value,
+                    Quantity = order.productQuantity.Value,
+                    TotalPrice = order.totalPrice.Value
+                }));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while fetching orders by email.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while fetching orders by email.");
             }
         }
 
@@ -91,7 +121,7 @@ namespace PsscFinalProject.Api.Controllers
                         }
 
                         // Extract the shipping address
-                        var shippingAddress = "Oras Arad, Strada Garii, nr. 124";
+                        var shippingAddress = "oras Arad, Strada Garii, nr. 124";
 
                         // Generate a valid bill number
                         var billNumber = BillNumber.Generate();

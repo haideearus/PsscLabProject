@@ -18,6 +18,7 @@ public class PublishOrderWorkflow
     private readonly IOrderItemRepository orderItemRepository;
     private readonly ILogger<PublishOrderWorkflow> logger;
     private readonly CalculateOrderOperation calculateOrderOperation;
+    private readonly OrderStateOperation orderStateOperation;
 
     public PublishOrderWorkflow(
         IClientRepository clientRepository,
@@ -25,7 +26,8 @@ public class PublishOrderWorkflow
         IProductRepository productRepository,
         IOrderItemRepository orderItemRepository,
         ILogger<PublishOrderWorkflow> logger,
-        CalculateOrderOperation calculateOrderOperation)
+        CalculateOrderOperation calculateOrderOperation,
+        OrderStateOperation orderStateOperation)
     {
         this.clientRepository = clientRepository;
         this.orderRepository = orderRepository;
@@ -33,6 +35,7 @@ public class PublishOrderWorkflow
         this.orderItemRepository = orderItemRepository;
         this.logger = logger;
         this.calculateOrderOperation = calculateOrderOperation;
+        this.orderStateOperation = orderStateOperation;
     }
 
     public async Task<IOrderPublishEvent> ExecuteAsync(PublishOrderCommand command)
@@ -80,7 +83,7 @@ public class PublishOrderWorkflow
                 return new OrderPublishFailedEvent(new List<string> { "Failed to calculate the order." });
             }
 
-            // Step 5: Save the order to the database
+            // Step 4: Save the order to the database
             var paidOrder = new PaidOrderProducts(
                 finalOrder.ProductList,
                 new ProductPrice(finalOrder.ProductList.Sum(p => p.totalPrice.Value)),
@@ -91,7 +94,7 @@ public class PublishOrderWorkflow
 
             await orderRepository.SaveOrdersAsync(paidOrder);
 
-            // Step 6: Publish the success event
+            // Step 5: Publish the success event
             logger.LogInformation("Order published successfully: {ClientEmail}", finalOrder.ClientEmail.Value);
             return new OrderPublishSucceededEvent(
                 finalOrder.ClientEmail,
