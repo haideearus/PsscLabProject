@@ -51,15 +51,27 @@ namespace PsscFinalProject.Data.Repositories
 
         public async Task SaveOrdersAsync(PaidOrderProducts paidOrder)
         {
+            // Fetch the shipping address for the client
+            var address = await dbContext.Addresses
+                .Where(a => a.ClientEmail == paidOrder.ClientEmail.Value)
+                .Select(a => a.ClientAddress)
+                .FirstOrDefaultAsync();
+
+            // Handle case where no address is found
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                throw new InvalidOperationException($"No valid shipping address found for client '{paidOrder.ClientEmail.Value}'.");
+            }
+
             // Create and add the order
             var order = new OrderDto
             {
                 OrderDate = paidOrder.OrderDate,
-                PaymentMethod = 1, // Example value
+                PaymentMethod = 1, // Example value, consider passing this dynamically
                 TotalAmount = paidOrder.TotalAmount.Value,
-                ShippingAddress = "Oras Arad, Starda Garii, nr. 124", // Example value
+                ShippingAddress = address, // Use the retrieved address
                 State = 1, // Example value
-                ClientEmail = paidOrder.ClientEmail.Value // Ensure this maps correctly
+                ClientEmail = paidOrder.ClientEmail.Value
             };
 
             dbContext.Orders.Add(order);
@@ -73,7 +85,6 @@ namespace PsscFinalProject.Data.Repositories
             // Add the order items with the generated Order_ID
             foreach (var product in paidOrder.ProductList)
             {
-                // Ensure each OrderItemDto has a unique OrderItemId
                 var orderItem = new OrderItemDto
                 {
                     OrderItemId = generatedOrderId, // Associate with the generated order
@@ -82,14 +93,12 @@ namespace PsscFinalProject.Data.Repositories
                     Price = product.productPrice.Value
                 };
 
-                // Detach the entity after adding it to the context
-                dbContext.Entry(orderItem).State = EntityState.Added;
+                dbContext.OrderItems.Add(orderItem);
             }
 
             // Save all order items in one operation
             await dbContext.SaveChangesAsync();
         }
 
-        
     }
 }

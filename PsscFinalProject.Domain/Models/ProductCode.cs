@@ -5,7 +5,7 @@ namespace PsscFinalProject.Domain.Models
 {
     public record ProductCode
     {
-        public const string Pattern = @"^[A-Za-z0-9]+$";
+        public const string Pattern = @"^PRD\d{3}$";
 
         public string Value { get; }
 

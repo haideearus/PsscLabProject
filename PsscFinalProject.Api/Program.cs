@@ -25,6 +25,7 @@ namespace PsscFinalProject.Api
             builder.Services.AddScoped<PublishOrderWorkflow>();
             builder.Services.AddScoped<PublishBillingWorkflow>();
             builder.Services.AddScoped<PublishDeliveryWorkflow>();
+            builder.Services.AddScoped<IAddressRepository, AddressRepository>();
             builder.Services.AddScoped<IDeliveryRepository,DeliveryRepository>();
             builder.Services.AddScoped<IClientRepository, ClientRepository>();
             builder.Services.AddScoped<IBillRepository, BillRepository>();

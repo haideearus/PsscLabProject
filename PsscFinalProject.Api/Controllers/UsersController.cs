@@ -24,18 +24,21 @@ namespace PsscFinalProject.Api.Controllers
             return Ok(users);
         }
 
-        // GET: api/users/{id}
+        // GET: api/users/{username}
         [HttpGet("{username}")]
-        public ActionResult<UserDto> GetUser(string username)
+        public async Task<ActionResult<UserDto>> GetUser(string username)
         {
-            var user = _userService.Users.FindAsync(username);
-            Console.WriteLine(user.Result);
-            if (user.IsCompleted)
+            var user = await _userService.Users
+                                          .FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user == null)
             {
-                return NotFound($"User with ID {username} not found.");
+                return NotFound($"User with username '{username}' not found.");
             }
-            return Ok(username);
+
+            return Ok(user);
         }
+
 
         // POST: api/users
         [HttpPost]
