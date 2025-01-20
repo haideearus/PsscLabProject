@@ -6,7 +6,7 @@ namespace PsscFinalProject.Domain.Models
     {
         public string Value { get; }
 
-        private static readonly string[] ValidCouriers = { "Sameday", "GLS", "FanCourier", "Posta" }; // Example valid couriers
+        private static readonly string[] ValidCouriers = { "Sameday", "GLS", "FanCourier", "Posta" }; 
 
         public Courier(string value)
         {

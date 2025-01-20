@@ -1,46 +1,57 @@
-﻿//using Microsoft.AspNetCore.Mvc;
-//using PsscFinalProject.Domain.Models;
-//using PsscFinalProject.Domain.Workflows;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using PsscFinalProject.Data;
+using PsscFinalProject.Data.Models;
 
-//namespace PsscFinalProject.Api.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class BillController : ControllerBase
-//    {
-//        private readonly BillOrderWorkflow _billWorkflow;
+[Route("api/[controller]")]
+[ApiController]
+public class BillController : ControllerBase
+{
+    private readonly PsscDbContext _context;
+    private readonly ILogger<BillController> _logger;
 
-//        public BillController(BillOrderWorkflow billWorkflow)
-//        {
-//            _billWorkflow = billWorkflow;
-//        }
+    public BillController(PsscDbContext context, ILogger<BillController> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
 
-//        // GET: api/bills
-//        //[HttpGet]
-//        //public async Task<ActionResult<IEnumerable<Bill>>> GetBills()
-//        //{
-//        //    var bills = await _billWorkflow.GetBillsAsync();
-//        //    return Ok(bills);
-//        //}
+    // GET: api/bill
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<BillDto>>> GetAllBills()
+    {
+        try
+        {
+            var bills = await _context.Bills.ToListAsync();
+            return Ok(bills);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while fetching bills.");
+            return StatusCode(500, "Internal server error.");
+        }
+    }
 
-//        // GET: api/bills/{id}
-//        //[HttpGet("{id}")]
-//        //public async Task<ActionResult<Bill>> GetBill(int id)
-//        //{
-//        //    var bill = await _billWorkflow.GetBillByIdAsync(id);
-//        //    if (bill == null)
-//        //    {
-//        //        return NotFound();
-//        //    }
-//        //    return Ok(bill);
-//        //}
+    // GET: api/bill/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetBillById(int id)
+    {
+        try
+        {
+            var bill = await _context.Bills.FindAsync(id);
 
-//        //// POST: api/bills
-//        //[HttpPost]
-//        //public async Task<IActionResult> SaveBills([FromBody] List<Bill> bills)
-//        //{
-//        //    await _billWorkflow.SaveBillsAsync(bills);
-//        //    return CreatedAtAction(nameof(GetBills), new { }, bills);
-//        //}
-//    }
-//}
+            if (bill == null)
+            {
+                return NotFound($"Bill with ID {id} not found.");
+            }
+
+            return Ok(bill);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while fetching the bill with ID {BillId}.", id);
+            return StatusCode(500, "Internal server error.");
+        }
+    }
+}

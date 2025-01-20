@@ -48,34 +48,5 @@ namespace PsscFinalProject.Api.Controllers
             var createdUser = await _userService.Users.AddAsync(newUser);
             return CreatedAtAction(nameof(GetUser), new { id = newUser.Username }, createdUser);
         }
-
-        //// PUT: api/users/{id}
-        //[HttpPut("{id}")]
-        //public IActionResult UpdateUser(int id, [FromBody] UserDto updatedUser)
-        //{
-        //    if (id != updatedUser.Email)
-        //    {
-        //        return BadRequest("User ID mismatch.");
-        //    }
-
-        //    if (!_userService.UpdateUser(id, updatedUser))
-        //    {
-        //        return NotFound($"User with ID {id} not found.");
-        //    }
-
-        //    return NoContent();
-        //}
-
-        //// DELETE: api/users/{id}
-        //[HttpDelete("{id}")]
-        //public IActionResult DeleteUser(int id)
-        //{
-        //    if (!_userService.DeleteUser(id))
-        //    {
-        //        return NotFound($"User with ID {id} not found.");
-        //    }
-
-        //    return NoContent();
-        //}
     }
 }

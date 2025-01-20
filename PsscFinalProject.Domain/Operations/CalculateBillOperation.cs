@@ -29,18 +29,16 @@ internal class CalculateBillOperation : OrderBillingOperation
             throw new ArgumentNullException(nameof(validatedBilling), "Validated billing cannot be null");
         }
 
-        // Use precomputed TotalAmount and ShippingAddress from the order workflow
         var calculatedBills = validatedBilling.BillList
             .Select(bill =>
             {
                 return new CalculatedBillNumber(
-                    ShippingAddress:(bill.ShippingAddress), // Precomputed ShippingAddress
-                    BillNumber: (bill.BillNumber), // Format BillNumber
-                    ProductPrice: (bill.TotalAmount) // Use TotalAmount from order workflow
+                    ShippingAddress:(bill.ShippingAddress), 
+                    BillNumber: (bill.BillNumber), 
+                    ProductPrice: (bill.TotalAmount) 
                 );
             }).ToList();
 
-        // Create and return CalculatedOrderBilling
         return new CalculatedOrderBilling(calculatedBills.AsReadOnly());
     }
 }

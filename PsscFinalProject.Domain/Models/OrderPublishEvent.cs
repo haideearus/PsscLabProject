@@ -18,7 +18,7 @@ namespace PsscFinalProject.Domain.Models
                 PublishDate = publishDate;
             }
 
-            public ClientEmail ClientEmail { get; } // Make sure this is public
+            public ClientEmail ClientEmail { get; } 
             public string Csv { get; }
             public ProductPrice ProductPrice { get; }
             public DateTime PublishDate { get; }
