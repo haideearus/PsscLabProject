@@ -34,5 +34,9 @@ namespace WebUI.Services
         {
             return _cartItems.Sum(item => item.Product.Price * item.Quantity);
         }
+        public static void ClearCart()
+        {
+            _cartItems.Clear();
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿@model IEnumerable<WebUI.Models.CartItemViewModel>
 
-<h2>Coșul tău</h2>
+<h2>Your Cart</h2>
 
 @if (Model.Any())
 {
@@ -8,10 +8,10 @@
         <thead>
         <tr>
             <th>ID</th>
-            <th>Produs</th>
-            <th>Cantitate</th>
-            <th>Preț</th>
-            <th>Acțiuni</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -31,14 +31,25 @@
                 </td>
             </tr>
         }
-    <a asp-action="Index" class="btn btn-primary">Înapoi la Index</a>
+            <a asp-action="Index" class="btn btn-primary">Home</a>
         </tbody>
     </table>
 
     <h3>Total: @ViewBag.Total</h3>
+    <form asp-action="PlaceOrder" method="post">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="Email" class="form-control" required />
+        </div>
+
+        <input type="hidden" id="cartItems" name="CartItems" value="@Json.Serialize(Model)" />
+
+        <button type="submit" class="btn btn-primary">Place order</button>
+    </form>
+
 }
 else
 {
-    <p>Coșul este gol.</p>
-    <a asp-action="Index" class="btn btn-primary">Înapoi la Index</a>
+    <p>Empty Cart.</p>
+    <a asp-action="Index" class="btn btn-primary">Home</a>
 }
