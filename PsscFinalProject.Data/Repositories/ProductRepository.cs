@@ -61,5 +61,21 @@ namespace PsscFinalProject.Data.Repositories
                             .ToList();
         }
 
+        public async Task<List<ProductUI>> GetAllProducts()
+        {
+            var ProductsDtos= await dbContext.Products.AsNoTracking().ToListAsync();
+
+            var products = ProductsDtos.Select(dto => new ProductUI
+            {
+                ProductName = dto.Name,
+                ProductCode = dto.Code,
+                ProductPrice = dto.Price,
+                ProductQuantity = dto.Stock,
+                ProductQuantityType = dto.QuantityType
+
+            }).ToList();
+            return products;
+        }
+        
     }
 }

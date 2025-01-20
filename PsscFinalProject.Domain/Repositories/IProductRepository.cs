@@ -9,6 +9,7 @@ namespace PsscFinalProject.Domain.Repositories
         Task<List<Products>> GetProductsByCodesAsync(IEnumerable<string> productCodes);
         Task<List<ProductQuantity>> GetProductStockByCodesAsync(IEnumerable<string> productCode);
         Task<List<ProductPrice>> GetProductPriceByCodesAsync(IEnumerable<string> productCode);
-        Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck); 
+        Task<List<ProductCode>> GetExistingProductsAsync(IEnumerable<string> productCodesToCheck);
+        Task<List<ProductUI>> GetAllProducts();
     }
 }

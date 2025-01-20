@@ -36,7 +36,7 @@ namespace WebUI.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            return RedirectToAction("Privacy", "Home");
+            return RedirectToAction("Index", "Product");
         }
 
         public async Task<IActionResult> Logout()
