@@ -1,0 +1,55 @@
+﻿@model IEnumerable<WebUI.Models.CartItemViewModel>
+
+<h2>Your Cart</h2>
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Product.Id</td>
+                <td>@item.Product.Name</td>
+                <td>@item.Quantity</td> <!-- Afișează cantitatea -->
+                <td>@item.Product.Price</td>
+                <td>
+                    <form asp-action="CartRemove" method="post">
+                            <input type="hidden" name="productId" value="@item.Product.Id" />
+                            <input type="hidden" name="productPrice" value="@item.Product.Price" />
+                        <button type="submit" class="btn btn-primary">Remove</button>
+                    </form>
+                </td>
+            </tr>
+        }
+            <a asp-action="Index" class="btn btn-primary">Home</a>
+        </tbody>
+    </table>
+
+    <h3>Total: @ViewBag.Total</h3>
+    <form asp-action="PlaceOrder" method="post">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="Email" class="form-control" required />
+        </div>
+
+        <input type="hidden" id="cartItems" name="CartItems" value="@Json.Serialize(Model)" />
+
+        <button type="submit" class="btn btn-primary">Place order</button>
+    </form>
+
+}
+else
+{
+    <p>Empty Cart.</p>
+    <a asp-action="Index" class="btn btn-primary">Home</a>
+}

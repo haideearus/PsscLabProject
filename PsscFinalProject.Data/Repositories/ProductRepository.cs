@@ -61,6 +61,7 @@ namespace PsscFinalProject.Data.Repositories
                             .ToList();
         }
 
+//<<<<<<< HEAD
         public async Task UpdateStockAsync(ProductCode productCode, ProductQuantity quantity)
         {
             var productDto = await dbContext.Products.FirstOrDefaultAsync(p => p.Code == productCode.Value);
@@ -83,5 +84,23 @@ namespace PsscFinalProject.Data.Repositories
             await dbContext.SaveChangesAsync();
         }
 
+//=======
+        public async Task<List<ProductUI>> GetAllProducts()
+        {
+            var ProductsDtos= await dbContext.Products.AsNoTracking().ToListAsync();
+
+            var products = ProductsDtos.Select(dto => new ProductUI
+            {
+                ProductName = dto.Name,
+                ProductCode = dto.Code,
+                ProductPrice = dto.Price,
+                ProductQuantity = dto.Stock,
+                ProductQuantityType = dto.QuantityType
+
+            }).ToList();
+            return products;
+        }
+        
+//>>>>>>> 6734cbcb2423aa913c8aa94ad8819cddf09af93a
     }
 }
