@@ -26,21 +26,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
-    // GET: api/products/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetProduct(int id)
-    {
-
-        var product = await _context.Products.FindAsync(id);
-        
-        if (product == null)
-        {
-            return NotFound();
-        }
-        return Ok(product);
-    }
-
-    // POST: api/products/search
+    // POST: api/products/productCode
     [HttpPost("search")]
     public async Task<ActionResult<IEnumerable<ProductDto>>> SearchProducts([FromBody] string searchTerm)
     {
@@ -56,19 +42,51 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
-    // DELETE: api/products/{id}
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
+    // PATCH: api/products/{productCode}/add-stock
+    [HttpPatch("{productCode}/add-stock")]
+    public async Task<IActionResult> AddStock(string productCode, [FromBody] int additionalStock)
     {
-        var product = await _context.Products.FindAsync(id);
+        if (additionalStock <= 0)
+        {
+            return BadRequest("The stock to add must be greater than zero.");
+        }
+
+        var product = await _context.Products.FirstOrDefaultAsync(p => p.Code == productCode);
+
         if (product == null)
         {
-            return NotFound();
+            return NotFound($"Product with code {productCode} not found.");
+        }
+
+        // Add the additional stock
+        product.Stock += additionalStock;
+
+        // Save changes to the database
+        _context.Products.Update(product);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            Message = $"Stock updated successfully for product {productCode}.",
+            UpdatedStock = product.Stock
+        });
+    }
+
+    // DELETE: api/products/{productCode}
+    [HttpDelete("{productCode}")]
+    public async Task<IActionResult> DeleteProduct(string productCode)
+    {
+        var product = await _context.Products.FirstOrDefaultAsync(p => p.Code == productCode);
+
+        if (product == null)
+        {
+            return NotFound($"Product with code '{productCode}' not found.");
         }
 
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return NoContent(); 
     }
+
 }

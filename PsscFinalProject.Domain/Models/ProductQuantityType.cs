@@ -11,7 +11,7 @@ namespace PsscFinalProject.Domain.Models
     {
             public string Value { get; }
 
-            private static readonly string[] ValidTypes = { "Piece", "Kilogram", "Liter", "Unit" }; // Example valid types
+            private static readonly string[] ValidTypes = { "Piece", "Kilogram", "Liter", "Unit" };
 
             public ProductQuantityType(string value)
             {

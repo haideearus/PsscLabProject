@@ -28,24 +28,27 @@ namespace PsscFinalProject.Api.Controllers
         private readonly PublishOrderWorkflow publishOrderWorkflow;
         private readonly PublishBillingWorkflow publishBillingWorkflow;
         private readonly PublishDeliveryWorkflow publishDeliveryWorkflow;
-        private readonly IOrderRepository orderRepository; // Add this line
+        private readonly IOrderRepository orderRepository;
+        private readonly IProductRepository productRepository;
+        private readonly IAddressRepository addressRepository;
 
-        // Modify the constructor to accept IOrderRepository
         public ClientOrderController(
-            ILogger<ClientOrderController> logger,
-            PublishOrderWorkflow publishOrderWorkflow,
-            PublishBillingWorkflow publishBillingWorkflow,
-            IOrderRepository orderRepository,
-            PublishDeliveryWorkflow publishDeliveryWorkflow) // Add this line
+        ILogger<ClientOrderController> logger,
+        PublishOrderWorkflow publishOrderWorkflow,
+        PublishBillingWorkflow publishBillingWorkflow,
+        IOrderRepository orderRepository,
+        PublishDeliveryWorkflow publishDeliveryWorkflow,
+        IProductRepository productRepository,
+        IAddressRepository addressRepository)
         {
             this.logger = logger;
             this.publishOrderWorkflow = publishOrderWorkflow;
             this.publishBillingWorkflow = publishBillingWorkflow;
-            this.orderRepository = orderRepository; // Assign the injected repository
+            this.orderRepository = orderRepository;
             this.publishDeliveryWorkflow = publishDeliveryWorkflow;
+            this.productRepository = productRepository;
+            this.addressRepository = addressRepository; // Assign the injected address repository
         }
-
-        //get orders by email
 
         [HttpGet("getAllOrders")]
         public async Task<IActionResult> GetAllOrders([FromServices] IOrderRepository orderRepository)
@@ -103,16 +106,22 @@ namespace PsscFinalProject.Api.Controllers
         {
             try
             {
+                // Execute the order placement workflow
                 var command = new PublishOrderCommand(unvalidatedOrders.ToList().AsReadOnly());
                 var result = await publishOrderWorkflow.ExecuteAsync(command);
 
                 switch (result)
                 {
                     case OrderPublishSucceededEvent success:
-                        // Retrieve the existing orders from the database
-                        var existingOrders = await orderRepository.GetExistingOrdersAsync();
+                        // Retrieve the client's shipping address
+                        var shippingAddress = await FetchShippingAddress(success.ClientEmail);
 
-                        // Find the order matching the client's email
+                        if (string.IsNullOrWhiteSpace(shippingAddress))
+                        {
+                            return BadRequest(new { Message = $"No shipping address found for client {success.ClientEmail.Value}." });
+                        }
+
+                        var existingOrders = await orderRepository.GetExistingOrdersAsync();
                         var existingOrder = existingOrders.FirstOrDefault(o => o.clientEmail.Value == success.ClientEmail.Value);
 
                         if (existingOrder == null)
@@ -120,13 +129,8 @@ namespace PsscFinalProject.Api.Controllers
                             return NotFound($"Order for client {success.ClientEmail} not found.");
                         }
 
-                        // Extract the shipping address
-                        var shippingAddress = "oras Arad, Strada Garii, nr. 124";
-
-                        // Generate a valid bill number
                         var billNumber = BillNumber.Generate();
 
-                        // Create unvalidated bills from the successful order
                         var unvalidatedBilling = new UnvalidatedOrderBilling(new List<UnvalidatedBill>
                 {
                     new UnvalidatedBill(billNumber.Value, shippingAddress, success.ProductPrice.Value)
@@ -134,7 +138,7 @@ namespace PsscFinalProject.Api.Controllers
 
                         // Trigger the billing workflow
                         var billingResult = await publishBillingWorkflow.ExecuteAsync(unvalidatedBilling, new PaidOrderProducts(
-                            productsList: new List<CalculatedProduct> { existingOrder }, // Wrapping existing order in a list
+                            productsList: new List<CalculatedProduct> { existingOrder },
                             totalAmount: success.ProductPrice,
                             csv: success.Csv,
                             orderDate: success.PublishDate,
@@ -150,7 +154,27 @@ namespace PsscFinalProject.Api.Controllers
                             });
                         }
 
-                        // Use the same OrderId for the delivery workflow
+                        // Update stock for each product in the order
+                        foreach (var order in unvalidatedOrders)
+                        {
+                            try
+                            {
+                                var productCode = new ProductCode(order.ProductCode);
+                                var quantity = new ProductQuantity(order.Quantity);
+
+                                await productRepository.UpdateStockAsync(productCode, quantity);
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                logger.LogError(ex, $"Stock update failed for product {order.ProductCode}. Insufficient stock.");
+                                return BadRequest(new
+                                {
+                                    Message = $"Order failed due to insufficient stock for product {order.ProductCode}.",
+                                    Error = ex.Message
+                                });
+                            }
+                        }
+
                         var unvalidatedDelivery = new UnvalidatedOrderDelivery(new List<UnvalidatedDelivery>
                 {
                     new UnvalidatedDelivery(
@@ -161,18 +185,20 @@ namespace PsscFinalProject.Api.Controllers
 
                         // Trigger the delivery workflow
                         var deliveryResult = await publishDeliveryWorkflow.ExecuteAsync(unvalidatedDelivery, new PaidOrderProducts(
-                            productsList: new List<CalculatedProduct> { existingOrder }, // Wrapping existing order in a list
+                            productsList: new List<CalculatedProduct> { existingOrder },
                             totalAmount: success.ProductPrice,
                             csv: success.Csv,
                             orderDate: success.PublishDate,
                             clientEmail: success.ClientEmail
-                        ), existingOrder.OrderId); // Pass OrderId
+                        ), existingOrder.OrderId);
 
                         return Ok(new
                         {
                             Message = "Order placed successfully.",
                             BillingStatus = "Billing succeeded.",
-                            DeliveryStatus = deliveryResult is PublishedOrderDelivery ? "Delivery succeeded." : "Delivery failed."
+                            DeliveryStatus = deliveryResult is PublishedOrderDelivery ? "Delivery succeeded." : "Delivery failed.",
+                            StockStatus = "Stock updated successfully.",
+                            ShippingAddress = shippingAddress
                         });
 
                     case OrderPublishFailedEvent failure:
@@ -192,5 +218,13 @@ namespace PsscFinalProject.Api.Controllers
             }
         }
 
+        // Helper method to fetch shipping address
+        private async Task<string> FetchShippingAddress(ClientEmail clientEmail)
+        {
+            var address = await addressRepository.GetAddressesByClientEmailAsync(clientEmail);
+
+            // Return the first address or handle the case where no address exists
+            return address.FirstOrDefault()?.Value ?? throw new InvalidOperationException($"No address found for client {clientEmail.Value}");
+        }
     }
 }

@@ -61,6 +61,30 @@ namespace PsscFinalProject.Data.Repositories
                             .ToList();
         }
 
+//<<<<<<< HEAD
+        public async Task UpdateStockAsync(ProductCode productCode, ProductQuantity quantity)
+        {
+            var productDto = await dbContext.Products.FirstOrDefaultAsync(p => p.Code == productCode.Value);
+
+            if (productDto == null)
+            {
+                throw new InvalidOperationException($"Product with code {productCode.Value} not found.");
+            }
+
+            if (productDto.Stock < quantity.Value)
+            {
+                throw new InvalidOperationException($"Insufficient stock for product {productCode.Value}. Available: {productDto.Stock}, Requested: {quantity.Value}.");
+            }
+
+            // Update stock directly on the ProductDto
+            productDto.Stock -= quantity.Value;
+
+            // Save the changes to the database
+            dbContext.Products.Update(productDto);
+            await dbContext.SaveChangesAsync();
+        }
+
+//=======
         public async Task<List<ProductUI>> GetAllProducts()
         {
             var ProductsDtos= await dbContext.Products.AsNoTracking().ToListAsync();
@@ -77,5 +101,6 @@ namespace PsscFinalProject.Data.Repositories
             return products;
         }
         
+//>>>>>>> 6734cbcb2423aa913c8aa94ad8819cddf09af93a
     }
 }

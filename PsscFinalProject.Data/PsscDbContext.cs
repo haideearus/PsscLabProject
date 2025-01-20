@@ -20,6 +20,8 @@ public partial class PsscDbContext : DbContext
 
     public virtual DbSet<ClientDto> Clients { get; set; }
 
+    public virtual DbSet<AddressDto> Addresses { get; set; }
+
     public virtual DbSet<DeliveryDto> Deliveries { get; set; }
 
     public virtual DbSet<OrderDto> Orders { get; set; }
@@ -51,6 +53,15 @@ public partial class PsscDbContext : DbContext
             //    .HasForeignKey(d => d.OrderId)
             //    .OnDelete(DeleteBehavior.ClientSetNull)
             //    .HasConstraintName("FK_BILLS_ORDER");
+        });
+
+        modelBuilder.Entity<AddressDto>(entity =>
+        {
+            entity.ToTable("ADDRESS");
+            entity.HasKey(e => e.AddressId).HasName("PK_Address");
+            entity.Property(e => e.AddressId).HasColumnName("AddressId");
+            entity.Property(e => e.ClientEmail).HasColumnName("ClientEmail").IsRequired().HasMaxLength(200).IsUnicode(false);
+            entity.Property(e => e.ClientAddress).HasColumnName("ClientAddress").IsRequired().HasMaxLength(500).IsUnicode(false);
         });
 
         modelBuilder.Entity<ClientDto>(entity =>
