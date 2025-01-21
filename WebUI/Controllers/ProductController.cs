@@ -41,7 +41,7 @@ namespace WebUI.Controllers
                 DeliveryId = dto.DeliveryId,
                 OrderId = dto.OrderId,
                 DeliveryDate = dto.DeliveryDate,
-                TrackingNumber = dto.TrackingNumber,
+                TrackingNumber =dto.TrackingNumber, 
                 Courier = dto.Courier,
             }).ToList();
             return modelDelivery;
