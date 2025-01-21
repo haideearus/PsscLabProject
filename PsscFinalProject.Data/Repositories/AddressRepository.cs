@@ -17,18 +17,21 @@ namespace PsscFinalProject.Data.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task AddAddressAsync(ClientEmail clientEmail, ShippingAddress address)
+        public async Task AddAddressAsync(ClientEmail clientEmail, ShippingAddress address, PaymentMethod paymentMethod)
         {
+            // Check if the client exists
             var clientExists = await dbContext.Clients.AnyAsync(c => c.Email == clientEmail.Value);
             if (!clientExists)
             {
                 throw new InvalidOperationException($"Client with email '{clientEmail.Value}' does not exist.");
             }
 
+            // Create and save the AddressDto
             var addressDto = new AddressDto
             {
                 ClientEmail = clientEmail.Value,
-                ClientAddress = address.Value
+                ClientAddress = address.Value,
+                PaymentMethod = paymentMethod.ToInt() // Map PaymentMethod to its integer value
             };
 
             dbContext.Addresses.Add(addressDto);
@@ -50,6 +53,22 @@ namespace PsscFinalProject.Data.Repositories
             await dbContext.SaveChangesAsync();
         }
 
+        public async Task ModifyPaymentMethodAsync(ClientEmail clientEmail, int addressId, PaymentMethod newPaymentMethod)
+        {
+            var address = await dbContext.Addresses
+                .FirstOrDefaultAsync(a => a.AddressId == addressId && a.ClientEmail == clientEmail.Value);
+
+            if (address == null)
+            {
+                throw new InvalidOperationException("Address not found for the specified client.");
+            }
+
+            // Update the payment method
+            address.PaymentMethod = newPaymentMethod.ToInt(); // Convert to integer for storage
+            dbContext.Addresses.Update(address);
+            await dbContext.SaveChangesAsync();
+        }
+
         public async Task<List<ShippingAddress>> GetAddressesByClientEmailAsync(ClientEmail clientEmail)
         {
             var addressStrings = await dbContext.Addresses
@@ -59,5 +78,6 @@ namespace PsscFinalProject.Data.Repositories
 
             return addressStrings.Select(ShippingAddress.Create).ToList();
         }
+    
     }
 }

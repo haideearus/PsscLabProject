@@ -12,5 +12,7 @@ namespace PsscFinalProject.Data.Models
         public int AddressId { get; set; }
         public string ClientEmail { get; set; } = null!;
         public string ClientAddress { get; set; } = null!;
+        public int PaymentMethod {  get; set; }
+
     }
 }
