@@ -22,9 +22,9 @@ namespace WebUI.Controllers
         {
             var products = await _productRepository.GetAllProducts();
             var modelProd = products.Select(dto => new ProductViewModel{
-                Id= dto.ProductCode,
-                Name=dto.ProductName,
-                Price=dto.ProductPrice,
+                Id= dto.ProductCode.Value,
+                Name=dto.ProductName.Value,
+                Price=dto.ProductPrice.Value,
             }).ToList();
             return modelProd;
         }

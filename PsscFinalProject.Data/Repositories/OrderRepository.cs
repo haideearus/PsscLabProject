@@ -7,16 +7,20 @@ using PsscFinalProject.Domain.Repositories;
 using PsscFinalProject.Data.Models;
 using static PsscFinalProject.Domain.Models.OrderProducts;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.Extensions.Logging;
+using PsscFinalProject.Domain.Operations;
 
 namespace PsscFinalProject.Data.Repositories
 {
     public class OrderRepository : IOrderRepository
     {
         private readonly PsscDbContext dbContext;
+        private readonly OrderStateOperation orderStateOperation;
 
-        public OrderRepository(PsscDbContext dbContext)
+        public OrderRepository(PsscDbContext dbContext, OrderStateOperation orderStateOperation)
         {
             this.dbContext = dbContext;
+            this.orderStateOperation = orderStateOperation; 
         }
 
         public async Task<List<CalculatedProduct>> GetExistingOrdersAsync()
@@ -29,6 +33,12 @@ namespace PsscFinalProject.Data.Repositories
                 join p in dbContext.Products on oi.ProductCode equals p.Code
                 select new { o, oi, p, c }
             ).ToListAsync();
+
+            foreach (var order in orders)
+            {
+                var newState = orderStateOperation.CalculateOrderState(order.o.OrderDate);
+                await UpdateOrderStateAsync(order.o.OrderId, newState); 
+            }
 
             // Map results to the domain model
             var calculatedProducts = orders.Select(order => new CalculatedProduct(
@@ -49,17 +59,65 @@ namespace PsscFinalProject.Data.Repositories
             return calculatedProducts;
         }
 
+        public async Task<PaidOrderProducts> GetOrderByIdAsync(int orderId)
+        {
+            var order = await (
+                from o in dbContext.Orders
+                join oi in dbContext.OrderItems on o.OrderId equals oi.OrderItemId
+                join p in dbContext.Products on oi.ProductCode equals p.Code
+                where o.OrderId == orderId
+                select new { o, oi, p }
+            ).ToListAsync();
+
+            if (!order.Any())
+            {
+                return null; 
+            }
+
+            var newState = orderStateOperation.CalculateOrderState(order.First().o.OrderDate);
+            await UpdateOrderStateAsync(order.First().o.OrderId, newState);
+
+            var paidOrder = new PaidOrderProducts(
+                productsList: order.Select(o => new CalculatedProduct(
+                    clientEmail: new ClientEmail(o.o.ClientEmail),
+                    productCode: new ProductCode(o.p.Code),
+                    productPrice: new ProductPrice(o.p.Price),
+                    productQuantityType: new ProductQuantityType(o.p.QuantityType),
+                    productQuantity: new ProductQuantity(o.oi.Quantity),
+                    totalPrice: new ProductPrice(o.oi.Price * o.oi.Quantity)
+                )).ToList(),
+                totalAmount: new ProductPrice(order.Sum(o => o.oi.Price * o.oi.Quantity)),
+                csv: string.Empty,
+                orderDate: order.First().o.OrderDate,
+                clientEmail: new ClientEmail(order.First().o.ClientEmail)
+            );
+
+            return paidOrder;
+        }
+
         public async Task SaveOrdersAsync(PaidOrderProducts paidOrder)
         {
+            // Fetch the shipping address for the client
+            var address = await dbContext.Addresses
+                .Where(a => a.ClientEmail == paidOrder.ClientEmail.Value)
+                .Select(a => a.ClientAddress)
+                .FirstOrDefaultAsync();
+
+            // Handle case where no address is found
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                throw new InvalidOperationException($"No valid shipping address found for client '{paidOrder.ClientEmail.Value}'.");
+            }
+
             // Create and add the order
             var order = new OrderDto
             {
                 OrderDate = paidOrder.OrderDate,
-                PaymentMethod = 1, // Example value
+                PaymentMethod = 1, // Example value, consider passing this dynamically
                 TotalAmount = paidOrder.TotalAmount.Value,
-                ShippingAddress = "Oras Arad, Starda Garii, nr. 124", // Example value
-                State = 1, // Example value
-                ClientEmail = paidOrder.ClientEmail.Value // Ensure this maps correctly
+                ShippingAddress = address,
+                State = (int)OrderState.Pending,
+                ClientEmail = paidOrder.ClientEmail.Value
             };
 
             dbContext.Orders.Add(order);
@@ -73,7 +131,6 @@ namespace PsscFinalProject.Data.Repositories
             // Add the order items with the generated Order_ID
             foreach (var product in paidOrder.ProductList)
             {
-                // Ensure each OrderItemDto has a unique OrderItemId
                 var orderItem = new OrderItemDto
                 {
                     OrderItemId = generatedOrderId, // Associate with the generated order
@@ -82,14 +139,70 @@ namespace PsscFinalProject.Data.Repositories
                     Price = product.productPrice.Value
                 };
 
-                // Detach the entity after adding it to the context
-                dbContext.Entry(orderItem).State = EntityState.Added;
+                dbContext.OrderItems.Add(orderItem);
             }
 
             // Save all order items in one operation
             await dbContext.SaveChangesAsync();
         }
 
-        
+        public async Task<List<CalculatedProduct>> GetOrdersByEmailAsync(string email)
+        {
+            var orders = await(
+                from o in dbContext.Orders
+                join c in dbContext.Clients on o.ClientEmail equals c.Email
+                join oi in dbContext.OrderItems on o.OrderId equals oi.OrderItemId
+                join p in dbContext.Products on oi.ProductCode equals p.Code
+                where o.ClientEmail == email
+                select new
+                {
+                    Order = o,
+                    OrderItem = oi,
+                    Product = p,
+                    Client = c,
+                    OrderItemId = oi.OrderItemId
+                }
+            ).ToListAsync();
+
+            foreach (var order in orders)
+            {
+                var newState = orderStateOperation.CalculateOrderState(order.Order.OrderDate);
+                await UpdateOrderStateAsync(order.Order.OrderId, newState); 
+            }
+
+            return orders.Select(order => new CalculatedProduct(
+                clientEmail: new ClientEmail(order.Client.Email),
+                productCode: new ProductCode(order.Product.Code),
+                productPrice: new ProductPrice(order.Product.Price),
+                productQuantityType: new ProductQuantityType(order.Product.QuantityType),
+                productQuantity: new ProductQuantity(order.OrderItem.Quantity),
+                totalPrice: new ProductPrice(order.OrderItem.Price * order.OrderItem.Quantity)
+            )
+            {
+                OrderItemId = order.OrderItemId,
+                OrderId = order.OrderItemId,
+                ClientEmail = order.Client.Email,
+                ProductId = order.Product.ProductId
+            }).ToList();
+        }
+
+        public async Task UpdateOrderStateAsync(int orderId, OrderState newState)
+        {
+            var order = await dbContext.Orders.FindAsync(orderId);
+            if (order == null)
+            {
+                throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+            }
+
+            try
+            {
+                order.State = (int)newState;
+                await dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new InvalidOperationException("Unable to update the order state at this time.", ex);
+            }
+        }
     }
 }

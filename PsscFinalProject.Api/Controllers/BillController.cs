@@ -34,23 +34,25 @@ public class BillController : ControllerBase
     }
 
     // GET: api/bill/{id}
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetBillById(int id)
+    [HttpGet("order/{id}")]  
+    public async Task<IActionResult> GetBillByOrderId(int id)  
     {
         try
         {
-            var bill = await _context.Bills.FindAsync(id);
+            var bill = await _context.Bills
+                .Where(b => b.OrderId == id) 
+                .FirstOrDefaultAsync(); 
 
             if (bill == null)
             {
-                return NotFound($"Bill with ID {id} not found.");
+                return NotFound($"Bill associated with Order ID {id} not found.");
             }
 
             return Ok(bill);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while fetching the bill with ID {BillId}.", id);
+            _logger.LogError(ex, "An error occurred while fetching the bill for Order ID {OrderId}.", id);
             return StatusCode(500, "Internal server error.");
         }
     }

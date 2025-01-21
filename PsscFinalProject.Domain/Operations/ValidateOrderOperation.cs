@@ -56,6 +56,7 @@ namespace PsscFinalProject.Domain.Operations
             var productCode = ValidateProductCode(product.ProductCode, errors);
             var quantity = ValidateQuantity(product.Quantity, errors);
 
+
             if (!errors.Any() && productCode != null && quantity != null)
             {
                 return (true, new ValidatedOrder(new ClientEmail(product.ClientEmail), productCode, quantity), errors);

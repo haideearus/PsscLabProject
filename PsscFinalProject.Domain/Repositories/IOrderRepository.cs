@@ -9,5 +9,8 @@ namespace PsscFinalProject.Domain.Repositories
     {
         Task<List<CalculatedProduct>> GetExistingOrdersAsync();
         Task SaveOrdersAsync(PaidOrderProducts paidOrder);
+        Task<PaidOrderProducts> GetOrderByIdAsync(int orderId);
+        Task<List<CalculatedProduct>> GetOrdersByEmailAsync(string email);
+        Task UpdateOrderStateAsync(int orderId, OrderState newState);
     }
 }

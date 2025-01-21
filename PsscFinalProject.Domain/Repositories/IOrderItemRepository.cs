@@ -12,6 +12,5 @@ namespace PsscFinalProject.Domain.Repositories
     {
             Task <List<CalculatedProduct>> GetProductsAsync ();
             Task SaveOrders(PaidOrderProducts order);
-     
     }
 }

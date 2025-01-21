@@ -61,21 +61,55 @@ namespace PsscFinalProject.Data.Repositories
                             .ToList();
         }
 
-        public async Task<List<ProductUI>> GetAllProducts()
+
+        public async Task UpdateStockAsync(ProductCode productCode, ProductQuantity quantity)
         {
-            var ProductsDtos= await dbContext.Products.AsNoTracking().ToListAsync();
+            var productDto = await dbContext.Products.FirstOrDefaultAsync(p => p.Code == productCode.Value);
 
-            var products = ProductsDtos.Select(dto => new ProductUI
+            if (productDto == null)
             {
-                ProductName = dto.Name,
-                ProductCode = dto.Code,
-                ProductPrice = dto.Price,
-                ProductQuantity = dto.Stock,
-                ProductQuantityType = dto.QuantityType
+                throw new InvalidOperationException($"Product with code {productCode.Value} not found.");
+            }
 
-            }).ToList();
-            return products;
+            if (productDto.Stock < quantity.Value)
+            {
+                throw new InvalidOperationException($"Insufficient stock for product {productCode.Value}. Available: {productDto.Stock}, Requested: {quantity.Value}.");
+            }
+
+            // Update stock directly on the ProductDto
+            productDto.Stock -= quantity.Value;
+
+            // Save the changes to the database
+            dbContext.Products.Update(productDto);
+            await dbContext.SaveChangesAsync();
         }
-        
+
+        public async Task<List<ValidatedProduct>> GetAllProducts()
+        {
+            // Step 1: Fetch products from the database
+            var productDtos = await dbContext.Products.AsNoTracking().ToListAsync();
+
+            // Step 2: Transform to Unvalidated Products using the constructor
+            var unvalidatedProducts = productDtos.Select(dto => new UnvalidatedProduct(
+                new ProductName(dto.Name).Value,                          
+                new ProductCode(dto.Code).Value,                          
+                new ProductPrice(dto.Price).Value,                   
+                new ProductQuantityType(dto.QuantityType).Value, 
+                new ProductQuantity(dto.Stock).Value        
+            )).ToList();
+
+            // Step 3: Validate and transform to Validated Products
+            var validatedProducts = unvalidatedProducts.Select(up =>
+                new ValidatedProduct(
+                    new ProductName(up.ProductName),
+                    new ProductCode(up.ProductCode),
+                    new ProductPrice(up.ProductPrice.Value),
+                    new ProductQuantityType(up.ProductQuantityType),
+                    new ProductQuantity(up.ProductQuantity.Value)
+                )).ToList();
+
+            return validatedProducts;
+        }
+
     }
 }

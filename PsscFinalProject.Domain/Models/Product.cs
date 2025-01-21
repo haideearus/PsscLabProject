@@ -14,6 +14,8 @@ namespace PsscFinalProject.Domain.Models
         public string? ProductQuantityType { get; set; }
         public int? ProductQuantity { get; set; }
 
+        public UnvalidatedProduct() { }
+
         public UnvalidatedProduct(string productName, string productCode, decimal productPrice, string productQuantityType, int productQuantity)
         {
             ProductName = productName;

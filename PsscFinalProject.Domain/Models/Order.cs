@@ -62,7 +62,7 @@ namespace PsscFinalProject.Domain.Models
 
         public record PaidOrderProducts : IOrderProducts
         {
-            internal PaidOrderProducts(IReadOnlyCollection<CalculatedProduct> productsList, ProductPrice totalAmount, string csv, DateTime orderDate, ClientEmail clientEmail)
+            public PaidOrderProducts(IReadOnlyCollection<CalculatedProduct> productsList, ProductPrice totalAmount, string csv, DateTime orderDate, ClientEmail clientEmail)
             {
                 ProductList = productsList;
                 TotalAmount = totalAmount;

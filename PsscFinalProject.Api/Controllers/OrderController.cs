@@ -1,79 +1,71 @@
-﻿//using Microsoft.AspNetCore.Mvc;
-//using PsscFinalProject.Domain.Models;
-//using static PsscFinalProject.Domain.Models.OrderPublishEvent;
+﻿using Microsoft.AspNetCore.Mvc;
+using PsscFinalProject.Domain.Models;
+using PsscFinalProject.Domain.Repositories;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using System;
+using PsscFinalProject.Data.Models;
+using static PsscFinalProject.Domain.Models.OrderPublishEvent;
+using static PsscFinalProject.Domain.Models.OrderProducts;
 
-//[ApiController]
-//[Route("api/[controller]")]
-//public class OrdersController : ControllerBase
-//{
-//    private readonly PublishOrderWorkflow _workflow;
-//    private readonly ILogger<OrdersController> _logger;
+[ApiController]
+[Route("api/[controller]")]
+public class OrdersController : ControllerBase
+{
+    private readonly PublishOrderWorkflow _workflow;
+    private readonly ILogger<OrdersController> _logger;
+    private readonly IOrderRepository _orderRepository; 
 
-//    public OrdersController(PublishOrderWorkflow workflow, ILogger<OrdersController> logger)
-//    {
-//        _workflow = workflow;
-//        _logger = logger;
-//    }
+    public OrdersController(PublishOrderWorkflow workflow, ILogger<OrdersController> logger, IOrderRepository orderRepository)
+    {
+        _workflow = workflow;
+        _logger = logger;
+        _orderRepository = orderRepository; // Initialize repository
+    }
 
-//    /// <summary>
-//    /// Adds an order and triggers the workflow.
-//    /// </summary>
-//    /// <param name="command">Order details.</param>
-//    /// <returns>200 if successful, 400 for validation errors, 500 for internal server errors.</returns>
-//    [HttpPost("add")] // Explicitly specify the HTTP method
-//    public async Task<IActionResult> AddOrder([FromBody] PublishOrderCommand command)
-//    {
-//        try
-//        {
-//            if (command == null)
-//            {
-//                _logger.LogWarning("Invalid order data received.");
-//                return BadRequest("Invalid order data.");
-//            }
+    /// <summary>
+    /// Retrieves the current state of an order.
+    /// </summary>
+    /// <param name="orderId">The ID of the order.</param>
+    /// <returns>The current state of the order.</returns>
+    [HttpGet("{orderId}/state")]
+    public async Task<IActionResult> GetOrderState(int orderId)
+    {
+        try
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
-//            var result = await _workflow.ExecuteAsync(command);
+            if (order == null)
+            {
+                return NotFound(new { message = $"Order with ID {orderId} not found." });
+            }
 
-//            if (result is OrderPublishSucceededEvent successEvent)
-//            {
-//                return Ok(new { Message = "Order created successfully.", successEvent.Csv });
-//            }
+            var orderState = GetOrderState(order);
 
-//            if (result is OrderPublishFailedEvent failedEvent)
-//            {
-//                return BadRequest(new { Message = "Failed to create order.", failedEvent.Reasons });
-//            }
+            return Ok(new { orderId = orderId, state = orderState });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while retrieving the order state.");
+            return StatusCode(500, new { message = "An internal error occurred.", details = ex.Message });
+        }
+    }
 
-//            return StatusCode(500, "Unexpected error occurred.");
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError(ex, "An error occurred while creating the order.");
-//            return StatusCode(500, "An internal error occurred.");
-//        }
-//    }
+    private string GetOrderState(PaidOrderProducts order)
+    {
+        var orderDate = order.OrderDate;
 
-//    /// <summary>
-//    /// Gets an order by ID.
-//    /// </summary>
-//    /// <param name="orderId">The ID of the order to retrieve.</param>
-//    /// <returns>The requested order or 404 if not found.</returns>
-//    //[HttpGet("{orderId}")] // Explicitly specify the HTTP method
-//    //public async Task<IActionResult> GetOrder(int orderId)
-//    //{
-//    //    try
-//    //    {
-//    //        var order = await _workflow.GetOrderByIdAsync(orderId);
-//    //        if (order == null)
-//    //        {
-//    //            return NotFound("Order not found.");
-//    //        }
-
-//    //        return Ok(order);
-//    //    }
-//    //    catch (Exception ex)
-//    //    {
-//    //        _logger.LogError(ex, "An error occurred while retrieving the order.");
-//    //        return StatusCode(500, "An internal error occurred.");
-//    //    }
-//    //}
-//}
+        if (orderDate.AddMinutes(5) > DateTime.Now)
+        {
+            return "Pending"; // Order is in 'Pending' state if created within the last 5 minutes
+        }
+        else if (orderDate.AddDays(1) > DateTime.Now)
+        {
+            return "Billed"; // Order is in 'Billed' state if created within the last day
+        }
+        else
+        {
+            return "Delivered"; // Order is in 'Delivered' state if created more than a day ago
+        }
+    }
+}

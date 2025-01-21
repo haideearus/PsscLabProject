@@ -65,12 +65,9 @@ public class ClientController : ControllerBase
         }
     }
 
-
-
-
     // GET: api/clients/{id}
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetClientById(int id)
+    public async Task<IActionResult> GetClientById(int id) 
     {
         var clientDto = await _context.Clients.FindAsync(id);
         if (clientDto == null)
