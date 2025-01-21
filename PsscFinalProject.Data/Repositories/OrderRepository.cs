@@ -87,7 +87,7 @@ namespace PsscFinalProject.Data.Repositories
                     totalPrice: new ProductPrice(o.oi.Price * o.oi.Quantity)
                 )).ToList(),
                 totalAmount: new ProductPrice(order.Sum(o => o.oi.Price * o.oi.Quantity)),
-                csv: string.Empty, // You can populate this as needed
+                csv: string.Empty,
                 orderDate: order.First().o.OrderDate,
                 clientEmail: new ClientEmail(order.First().o.ClientEmail)
             );
