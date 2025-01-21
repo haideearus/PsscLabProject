@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 
 namespace PsscFinalProject.Domain.Models
 {
-    public class Delivery
+    public record Delivery
     {
         public int DeliveryId { get; set; }
-        // other properties...
-        public int OrderId { get; set; }    // Foreign Key to Order
+        public int OrderId { get; set; }  
         public DateTime DeliveryDate { get; set; }
-        public string TrackingNumber { get; set; } = string.Empty;
-        public string Courier { get; set; } = string.Empty;
+        public TrackingNumber? TrackingNumber { get; set; }
+        public Courier? Courier { get; set; } 
     }
 }

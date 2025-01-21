@@ -85,8 +85,8 @@ namespace PsscFinalProject.Data.Repositories
                 DeliveryId = dto.DeliveryId,
                 OrderId = dto.OrderId,
                 DeliveryDate = dto.DeliveryDate,
-                TrackingNumber = dto.TrackingNumber,
-                Courier = dto.Courier,
+                TrackingNumber = TrackingNumber.Create(dto.TrackingNumber),
+                Courier = Courier.Create(dto.Courier),
                 // Adaugă alte câmpuri necesare aici
             }).ToList();
             return deliveries;
