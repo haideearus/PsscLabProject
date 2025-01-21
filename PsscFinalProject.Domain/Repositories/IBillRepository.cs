@@ -10,5 +10,6 @@ namespace PsscFinalProject.Domain.Repositories
     {
         Task<List<CalculatedBillNumber>> GetAll();
         Task SaveBills(PublishedOrderBilling bills);
+        Task<List<Bill>> GetAllBy(List<int> orderIds);
     }
 }

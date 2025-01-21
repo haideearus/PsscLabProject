@@ -5,6 +5,7 @@ using PsscFinalProject.Data.Models;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
 using System.Text;
+using PsscFinalProject.WebUI.Models;
 using WebUI.Models;
 using WebUI.Services;
 
@@ -15,11 +16,13 @@ namespace WebUI.Controllers
         private readonly IProductRepository _productRepository;
         private readonly IDeliveryRepository _deliveryRepository;
         private readonly IOrderRepository _orderRepository;
-        public ProductController( IProductRepository productRepository, IDeliveryRepository deliveryRepository, IOrderRepository orderRepository)
+        private readonly IBillRepository _billRepository;
+        public ProductController(  IProductRepository productRepository, IDeliveryRepository deliveryRepository, IOrderRepository orderRepository, IBillRepository billRepository)
         {
             _productRepository = productRepository;
             _deliveryRepository = deliveryRepository;
             _orderRepository = orderRepository;
+            _billRepository = billRepository;
         }
 
         public async Task<List<ProductViewModel>> GetAllProducts()
@@ -45,6 +48,20 @@ namespace WebUI.Controllers
                 Courier = dto.Courier,
             }).ToList();
             return modelDelivery;
+        }
+        public async Task<List<BillViewModel>> GetAllBills()
+        {
+            var OrderIdList = await _orderRepository.GetOrderIdsByEmailAsync(CartService.GetEmail());
+            var bills = await _billRepository.GetAllBy(OrderIdList);
+            var modelBill = bills.Select(dto => new BillViewModel
+            {
+                BillId = dto.BillId,
+                OrderId = dto.OrderId,
+                BillDateTime = dto.BillDateTime,
+                BillNumber = dto.BillNumber,
+                Amount = dto.Amount,
+            }).ToList();
+            return modelBill;
         }
         // Afișează lista de produse
         public async Task<IActionResult> Index()
@@ -138,6 +155,14 @@ namespace WebUI.Controllers
             var deliveries = await GetAllDeliveries();
 
             return View(deliveries);
+        }
+        public async Task<IActionResult> Bill()
+        {
+
+            // Exemplu de produse
+            var bills = await GetAllBills();
+
+            return View(bills);
         }
     }
 }

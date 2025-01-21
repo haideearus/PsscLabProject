@@ -1,0 +1,40 @@
+﻿@model IEnumerable<PsscFinalProject.WebUI.Models.BillViewModel>
+
+@{
+    ViewData["Title"] = "Expedieri";
+}
+
+<h2>Bills</h2>
+<a asp-action="Index" class="btn btn-primary">Home</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Bill ID</th>
+            <th>Order ID</th>
+            <th>Data Facturarii</th>
+            <th>Număr Factura</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var bill in Model)
+            {
+                <tr>
+                    <td>@bill.BillId</td>
+                    <td>@bill.OrderId</td>
+                    <td>@bill.BillDateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@bill.BillNumber</td>
+                    <td>@bill.Amount</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">Nu există expedieri disponibile.</td>
+            </tr>
+        }
+    </tbody>
+</table>

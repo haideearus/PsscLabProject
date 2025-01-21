@@ -25,6 +25,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IBillRepository, BillRepository>();
 builder.Services.AddScoped<OrderStateOperation>();
 builder.Services.AddScoped<UserService>();
 

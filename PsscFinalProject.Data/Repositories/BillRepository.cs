@@ -1,4 +1,4 @@
-using PsscFinalProject.Data.Models;
+﻿using PsscFinalProject.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,6 +78,25 @@ namespace PsscFinalProject.Data.Repositories
 
             // Save changes to the database
             await dbContext.SaveChangesAsync();
+        }
+        public async Task<List<Bill>> GetAllBy(List<int> orderIds)
+        {
+            // Load bills and join them with orders
+            var billDto = await dbContext.Bills
+                .Where(d => orderIds.Contains(d.OrderId)) // Filtrăm după lista de orderId-uri
+                .AsNoTracking()
+                .ToListAsync();
+            var bills = billDto.Select(dto => new Bill
+            {
+                BillId = dto.BillId,
+                OrderId = dto.OrderId,
+                BillDateTime = dto.BillingDate,
+                BillNumber = dto.BillNumber,
+                Amount = dto.TotalAmount,
+                // Adaugă alte câmpuri necesare aici
+            }).ToList();
+
+            return bills;
         }
 
     }
