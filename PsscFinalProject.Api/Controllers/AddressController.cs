@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PsscFinalProject.Api.Models;
+using PsscFinalProject.Data.Models;
 using PsscFinalProject.Data.Repositories;
 using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
@@ -33,7 +34,6 @@ public class AddressController : ControllerBase
         }
     }
 
-    // Add an address for an existing client
     [HttpPost("add")]
     public async Task<IActionResult> AddAddress([FromBody] AddAddressRequest request)
     {
@@ -46,20 +46,26 @@ public class AddressController : ControllerBase
                 return NotFound(new { Message = $"Client with email {request.ClientEmail} does not exist." });
             }
 
+            // Validate PaymentMethod
+            var paymentMethod = PaymentMethod.FromString(request.PaymentMethod);
+
             // Validate and add the address
             var clientEmail = new ClientEmail(request.ClientEmail);
             var shippingAddress = ShippingAddress.Create(request.ClientAddress);
-            await addressRepository.AddAddressAsync(clientEmail, shippingAddress);
+            var addressDto = new AddressDto
+            {
+                ClientEmail = request.ClientEmail,
+                ClientAddress = request.ClientAddress,
+                PaymentMethod = paymentMethod.ToInt()
+            };
+
+            await addressRepository.AddAddressAsync(clientEmail, shippingAddress, paymentMethod);
 
             return Ok(new { Message = "Address added successfully." });
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { Error = $"Invalid address format: {ex.Message}" });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { Error = ex.Message });
+            return BadRequest(new { Error = $"Invalid payment method or address format: {ex.Message}" });
         }
         catch (Exception ex)
         {
@@ -83,6 +89,33 @@ public class AddressController : ControllerBase
         catch (ArgumentException ex)
         {
             return BadRequest(new { Error = $"Invalid address format: {ex.Message}" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Error = ex.Message });
+        }
+    }
+
+    [HttpPut("modify/paymentmethod")]
+    public async Task<IActionResult> ModifyPaymentMethod([FromBody] ModifyPaymentMethodRequest request)
+    {
+        try
+        {
+            // Validate client email
+            var clientEmail = new ClientEmail(request.ClientEmail);
+
+            // Modify the payment method for the specified address
+            await addressRepository.ModifyPaymentMethodAsync(clientEmail, request.AddressId, request.NewPaymentMethod);
+
+            return Ok(new { Message = "Payment method modified successfully." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { Error = $"Invalid payment method or email format: {ex.Message}" });
         }
         catch (InvalidOperationException ex)
         {

@@ -6,6 +6,7 @@ namespace PsscFinalProject.Api.Models
     {
         public string ClientEmail { get; set; } = null!;
         public string ClientAddress { get; set; } = null!;
+        public string PaymentMethod { get; set; } = null!;
     }
 
     public class ModifyAddressRequest
@@ -14,4 +15,13 @@ namespace PsscFinalProject.Api.Models
         public int AddressId { get; set; }
         public string NewAddress { get; set; } = null!;
     }
+
+    public class ModifyPaymentMethodRequest
+    {
+        public string ClientEmail { get; set; } = null!;
+        public int AddressId { get; set; }
+        public PaymentMethod NewPaymentMethod { get; set; } = null!;
+    }
+
+
 }

@@ -55,16 +55,30 @@ public partial class PsscDbContext : DbContext
             //    .HasConstraintName("FK_BILLS_ORDER");
         });
 
+
         modelBuilder.Entity<AddressDto>(entity =>
         {
             entity.ToTable("ADDRESS");
             entity.HasKey(e => e.AddressId).HasName("PK_Address");
+
             entity.Property(e => e.AddressId).HasColumnName("AddressId");
-            entity.Property(e => e.ClientEmail).HasColumnName("ClientEmail").IsRequired().HasMaxLength(200).IsUnicode(false);
-            entity.Property(e => e.ClientAddress).HasColumnName("ClientAddress").IsRequired().HasMaxLength(500).IsUnicode(false);
+            entity.Property(e => e.ClientEmail)
+                .HasColumnName("ClientEmail")
+                .IsRequired()
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.ClientAddress)
+                .HasColumnName("ClientAddress")
+                .IsRequired()
+                .HasMaxLength(500)
+                .IsUnicode(false);
+
+            // Map PaymentMethodInt directly to database
+            entity.Property(e => e.PaymentMethod)
+                .HasColumnName("PaymentMethod");
         });
 
-        modelBuilder.Entity<ClientDto>(entity =>
+    modelBuilder.Entity<ClientDto>(entity =>
         {
             entity.ToTable("CLIENT");
 
