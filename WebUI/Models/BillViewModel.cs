@@ -1,11 +1,13 @@
-﻿namespace PsscFinalProject.WebUI.Models
+﻿using PsscFinalProject.Domain.Models;
+
+namespace PsscFinalProject.WebUI.Models
 {
     public class BillViewModel
     {
         public int BillId { get; set; } // Primary Key
         public int OrderId { get; set; }    // Foreign Key to Order
         public DateTime BillDateTime { get; set; }
-        public string BillNumber { get; set; } = string.Empty;
-        public decimal Amount { get; set; } 
+        public BillNumber? BillNumber { get; set; }
+        public ProductPrice? Amount { get; set; } 
     }
 }

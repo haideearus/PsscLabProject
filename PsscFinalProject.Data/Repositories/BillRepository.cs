@@ -91,8 +91,8 @@ namespace PsscFinalProject.Data.Repositories
                 BillId = dto.BillId,
                 OrderId = dto.OrderId,
                 BillDateTime = dto.BillingDate,
-                BillNumber = dto.BillNumber,
-                Amount = dto.TotalAmount,
+                BillNumber = BillNumber.Create(dto.BillNumber),
+                Amount = ProductPrice.Create(dto.TotalAmount),
                 // Adaugă alte câmpuri necesare aici
             }).ToList();
 
