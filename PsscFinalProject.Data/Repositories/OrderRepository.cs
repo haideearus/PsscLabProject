@@ -97,54 +97,60 @@ namespace PsscFinalProject.Data.Repositories
 
         public async Task SaveOrdersAsync(PaidOrderProducts paidOrder)
         {
-            // Fetch the shipping address for the client
-            var address = await dbContext.Addresses
+            // Fetch the shipping address and payment method for the client
+            var addressInfo = await dbContext.Addresses
                 .Where(a => a.ClientEmail == paidOrder.ClientEmail.Value)
-                .Select(a => a.ClientAddress)
+                .Select(a => new
+                {
+                    ShippingAddress = a.ClientAddress,
+                    PaymentMethod = a.PaymentMethod // Retrieve as integer
+                })
                 .FirstOrDefaultAsync();
 
-            // Handle case where no address is found
-            if (string.IsNullOrWhiteSpace(address))
+            if (addressInfo != null)
             {
-                throw new InvalidOperationException($"No valid shipping address found for client '{paidOrder.ClientEmail.Value}'.");
-            }
-
-            // Create and add the order
-            var order = new OrderDto
-            {
-                OrderDate = paidOrder.OrderDate,
-                PaymentMethod = 1, // Example value, consider passing this dynamically
-                TotalAmount = paidOrder.TotalAmount.Value,
-                ShippingAddress = address,
-                State = (int)OrderState.Pending,
-                ClientEmail = paidOrder.ClientEmail.Value
-            };
-
-            dbContext.Orders.Add(order);
-
-            // Save changes to get the generated Order_ID
-            await dbContext.SaveChangesAsync();
-
-            // Retrieve the generated Order_ID
-            int generatedOrderId = order.OrderId;
-
-            // Add the order items with the generated Order_ID
-            foreach (var product in paidOrder.ProductList)
-            {
-                var orderItem = new OrderItemDto
+                // Create and add the order
+                var order = new OrderDto
                 {
-                    OrderItemId = generatedOrderId, // Associate with the generated order
-                    ProductCode = product.productCode.Value,
-                    Quantity = product.productQuantity.Value,
-                    Price = product.productPrice.Value
+                    OrderDate = paidOrder.OrderDate,
+                    PaymentMethod = addressInfo.PaymentMethod, // Store as integer
+                    TotalAmount = paidOrder.TotalAmount.Value,
+                    ShippingAddress = addressInfo.ShippingAddress,
+                    State = (int)OrderState.Pending,
+                    ClientEmail = paidOrder.ClientEmail.Value
                 };
 
-                dbContext.OrderItems.Add(orderItem);
-            }
+                dbContext.Orders.Add(order);
 
-            // Save all order items in one operation
-            await dbContext.SaveChangesAsync();
+                // Save changes to get the generated Order_ID
+                await dbContext.SaveChangesAsync();
+
+                // Retrieve the generated Order_ID
+                int generatedOrderId = order.OrderId;
+
+                // Add the order items with the generated Order_ID
+                foreach (var product in paidOrder.ProductList)
+                {
+                    var orderItem = new OrderItemDto
+                    {
+                        OrderItemId = generatedOrderId, // Associate with the generated order
+                        ProductCode = product.productCode.Value,
+                        Quantity = product.productQuantity.Value,
+                        Price = product.productPrice.Value
+                    };
+
+                    dbContext.OrderItems.Add(orderItem);
+                }
+
+                // Save all order items in one operation
+                await dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                throw new InvalidOperationException("No address or payment method found for the specified client.");
+            }
         }
+
 
         public async Task<List<CalculatedProduct>> GetOrdersByEmailAsync(string email)
         {
