@@ -37,6 +37,7 @@ namespace PsscFinalProject.Data.Repositories
             {
                 UserName = dto.Username,
                 Password = dto.Password,
+                Email = dto.Email,
                 // Adaugă alte câmpuri necesare aici
             }).ToList();
             return users;

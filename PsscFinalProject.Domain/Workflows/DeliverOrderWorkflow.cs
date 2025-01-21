@@ -29,7 +29,7 @@ public class PublishDeliveryWorkflow
         try
         {
             // Step 1: Log details from PaidOrderProducts
-            logger.LogInformation("Using paid order details: {ClientEmail}, {OrderDate}, {OrderId}",
+            logger.LogInformation("Paid order details: {ClientEmail}, {OrderDate}, {OrderId}",
                 paidOrder.ClientEmail.Value, paidOrder.OrderDate, orderId);
 
             // Step 2: Validate the deliveries

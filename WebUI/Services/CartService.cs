@@ -5,9 +5,18 @@ namespace WebUI.Services
     public static class CartService
     {
         private static readonly List<CartItemViewModel> _cartItems = new List<CartItemViewModel>();
-
+        private static string trueEmail; 
         public static List<CartItemViewModel> GetCartItems() => _cartItems;
 
+        public static void SetEmail(string mail)
+        {
+            trueEmail = mail;
+        }
+
+        public static string GetEmail()
+        {
+            return trueEmail;
+        }
         public static void AddToCart(ProductViewModel product)
         {
             var existingItem = _cartItems.FirstOrDefault(item => item.Product.Id == product.Id);

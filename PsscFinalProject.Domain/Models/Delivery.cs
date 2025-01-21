@@ -10,5 +10,9 @@ namespace PsscFinalProject.Domain.Models
     {
         public int DeliveryId { get; set; }
         // other properties...
+        public int OrderId { get; set; }    // Foreign Key to Order
+        public DateTime DeliveryDate { get; set; }
+        public string TrackingNumber { get; set; } = string.Empty;
+        public string Courier { get; set; } = string.Empty;
     }
 }

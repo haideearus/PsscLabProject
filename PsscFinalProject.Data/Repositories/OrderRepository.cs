@@ -204,5 +204,16 @@ namespace PsscFinalProject.Data.Repositories
                 throw new InvalidOperationException("Unable to update the order state at this time.", ex);
             }
         }
+        public async Task<List<int>> GetOrderIdsByEmailAsync(string email)
+        {
+            var orderIds = await (
+                    from o in dbContext.Orders
+                    where o.ClientEmail == email
+                    select o.OrderId
+                ).Distinct() // Pentru a evita duplicatele
+                .ToListAsync();
+
+            return orderIds;
+        }
     }
 }

@@ -1,4 +1,4 @@
-using PsscFinalProject.Domain.Models;
+﻿using PsscFinalProject.Domain.Models;
 using PsscFinalProject.Domain.Repositories;
 using PsscFinalProject.Data.Models;
 using System.Collections.Generic;
@@ -74,6 +74,23 @@ namespace PsscFinalProject.Data.Repositories
             await dbContext.SaveChangesAsync();
         }
 
+        public async Task<List<Delivery>> GetAllDeliveries(List<int> orderIds)
+        {
+            var deliveriesDto = await dbContext.Deliveries
+                .Where(d => orderIds.Contains(d.OrderId)) // Filtrăm după lista de orderId-uri
+                .AsNoTracking()
+                .ToListAsync();
+            var deliveries = deliveriesDto.Select(dto => new Delivery
+            {
+                DeliveryId = dto.DeliveryId,
+                OrderId = dto.OrderId,
+                DeliveryDate = dto.DeliveryDate,
+                TrackingNumber = dto.TrackingNumber,
+                Courier = dto.Courier,
+                // Adaugă alte câmpuri necesare aici
+            }).ToList();
+            return deliveries;
+        }
 
 
 

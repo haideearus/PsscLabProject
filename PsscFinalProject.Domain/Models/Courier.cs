@@ -42,5 +42,10 @@ namespace PsscFinalProject.Domain.Models
 
             return false;
         }
+        public static string GetCourier()
+        {
+            var random = new Random();
+            return ValidCouriers[random.Next(ValidCouriers.Length)];
+        }
     }
 }

@@ -10,5 +10,7 @@ namespace PsscFinalProject.Domain.Repositories
     {
        Task<List<CalculatedTrackingNumber>> GetExistingDeliveriesAsync();
        Task SaveDeliveries(PublishedOrderDelivery deliveries);
+
+       Task<List<Delivery>> GetAllDeliveries(List<int> orderIds);
     }
 }

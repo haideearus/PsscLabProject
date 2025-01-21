@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PsscFinalProject.Tests", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PsscFinalProject.UI", "UI\PsscFinalProject.UI.csproj", "{B047D889-3093-4447-9DAE-B411390C9B5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUI", "WebUI\WebUI.csproj", "{CC371CD5-8805-4FE1-980F-7BA2A1887F7A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PsscFinalProject.WebUI", "WebUI\PsscFinalProject.WebUI.csproj", "{CC371CD5-8805-4FE1-980F-7BA2A1887F7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

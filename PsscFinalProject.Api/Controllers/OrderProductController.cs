@@ -179,7 +179,7 @@ namespace PsscFinalProject.Api.Controllers
                         {
                             new UnvalidatedDelivery(
                                 TrackingNumber.Generate().Value,
-                                "Sameday" // Example courier, this can be dynamic or user-provided
+                                Courier.GetCourier()//"Sameday" // Example courier, this can be dynamic or user-provided
                             )
                         }.AsReadOnly());
 

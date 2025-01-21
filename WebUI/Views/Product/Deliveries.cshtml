@@ -1,0 +1,40 @@
+﻿@model IEnumerable<WebUI.Models.DeliveryViewModel>
+
+@{
+    ViewData["Title"] = "Expedieri";
+}
+
+<h2>Lista Expedierilor</h2>
+<a asp-action="Index" class="btn btn-primary">Home</a>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Delivery ID</th>
+        <th>Order ID</th>
+        <th>Data Livrării</th>
+        <th>Număr Tracking</th>
+        <th>Curier</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (Model != null && Model.Any())
+    {
+        foreach (var delivery in Model)
+        {
+            <tr>
+                <td>@delivery.DeliveryId</td>
+                <td>@delivery.OrderId</td>
+                <td>@delivery.DeliveryDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@delivery.TrackingNumber</td>
+                <td>@delivery.Courier</td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="5" class="text-center">Nu există expedieri disponibile.</td>
+        </tr>
+    }
+    </tbody>
+</table>

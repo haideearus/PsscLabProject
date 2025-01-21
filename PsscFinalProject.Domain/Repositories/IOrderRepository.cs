@@ -12,5 +12,6 @@ namespace PsscFinalProject.Domain.Repositories
         Task<PaidOrderProducts> GetOrderByIdAsync(int orderId);
         Task<List<CalculatedProduct>> GetOrdersByEmailAsync(string email);
         Task UpdateOrderStateAsync(int orderId, OrderState newState);
+        Task<List<int>> GetOrderIdsByEmailAsync(string email);
     }
 }

@@ -24,12 +24,13 @@
             <td>
                 <form asp-action="Cart" method="post">
                     <input type="hidden" name="productId" value="@product.Id" />
-                        <input type="hidden" name="productPrice" value="@product.Price" />
-                        <input type="hidden" name="productName" value="@product.Name" />
+                    <input type="hidden" name="productPrice" value="@product.Price" />
+                    <input type="hidden" name="productName" value="@product.Name" />
                     <button type="submit" class="btn btn-primary">Add 1 quantity</button>
                 </form>
             </td>
         </tr>
     }
     </tbody>
+    <a asp-action="Deliveries" class="btn btn-primary">Check Your Deliveries</a>
 </table>

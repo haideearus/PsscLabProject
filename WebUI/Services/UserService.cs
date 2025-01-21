@@ -32,6 +32,7 @@ namespace WebUI.Services
                     if (!user.UserName.Equals(username)) continue;
                     if (user.Password.Equals(password))
                     {
+                        CartService.SetEmail(user.Email);
                         return true;
                     }
                 }

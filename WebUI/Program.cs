@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PsscFinalProject.Data;
 using PsscFinalProject.Data.Repositories;
+using PsscFinalProject.Domain.Operations;
 using PsscFinalProject.Domain.Repositories;
 using WebUI.Data;
 using WebUI.Services;
@@ -22,6 +23,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<OrderStateOperation>();
 builder.Services.AddScoped<UserService>();
 
 
