@@ -61,7 +61,7 @@ namespace PsscFinalProject.Data.Repositories
                             .ToList();
         }
 
-//<<<<<<< HEAD
+
         public async Task UpdateStockAsync(ProductCode productCode, ProductQuantity quantity)
         {
             var productDto = await dbContext.Products.FirstOrDefaultAsync(p => p.Code == productCode.Value);
@@ -84,23 +84,32 @@ namespace PsscFinalProject.Data.Repositories
             await dbContext.SaveChangesAsync();
         }
 
-//=======
-        public async Task<List<ProductUI>> GetAllProducts()
+        public async Task<List<ValidatedProduct>> GetAllProducts()
         {
-            var ProductsDtos= await dbContext.Products.AsNoTracking().ToListAsync();
+            // Step 1: Fetch products from the database
+            var productDtos = await dbContext.Products.AsNoTracking().ToListAsync();
 
-            var products = ProductsDtos.Select(dto => new ProductUI
-            {
-                ProductName = dto.Name,
-                ProductCode = dto.Code,
-                ProductPrice = dto.Price,
-                ProductQuantity = dto.Stock,
-                ProductQuantityType = dto.QuantityType
+            // Step 2: Transform to Unvalidated Products using the constructor
+            var unvalidatedProducts = productDtos.Select(dto => new UnvalidatedProduct(
+                new ProductName(dto.Name).Value,                          
+                new ProductCode(dto.Code).Value,                          
+                new ProductPrice(dto.Price).Value,                   
+                new ProductQuantityType(dto.QuantityType).Value, 
+                new ProductQuantity(dto.Stock).Value        
+            )).ToList();
 
-            }).ToList();
-            return products;
+            // Step 3: Validate and transform to Validated Products
+            var validatedProducts = unvalidatedProducts.Select(up =>
+                new ValidatedProduct(
+                    new ProductName(up.ProductName),
+                    new ProductCode(up.ProductCode),
+                    new ProductPrice(up.ProductPrice.Value),
+                    new ProductQuantityType(up.ProductQuantityType),
+                    new ProductQuantity(up.ProductQuantity.Value)
+                )).ToList();
+
+            return validatedProducts;
         }
-        
-//>>>>>>> 6734cbcb2423aa913c8aa94ad8819cddf09af93a
+
     }
 }

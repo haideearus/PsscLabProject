@@ -9,7 +9,7 @@ namespace PsscFinalProject.Domain.Models
     public class ProductUI
     {
         public string? ProductName { get; set; }
-        public string? ProductCode { get; set; }
+        public ProductCode? ProductCode { get; set; }
         public decimal? ProductPrice { get; set; }
         public string? ProductQuantityType { get; set; }
         public int? ProductQuantity { get; set; }

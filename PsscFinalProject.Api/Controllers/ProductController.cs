@@ -26,6 +26,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+
     // POST: api/products/productCode
     [HttpPost("search")]
     public async Task<ActionResult<IEnumerable<ProductDto>>> SearchProducts([FromBody] string searchTerm)

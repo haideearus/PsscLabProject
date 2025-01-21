@@ -7,11 +7,11 @@ namespace PsscFinalProject.Api.Models
     {
         [Required]
         [RegularExpression(ClientEmail.Pattern)]
-        public required string Client_Email { get; set; }
+        public required ClientEmail Client_Email { get; set; }
 
         [Required]
         [RegularExpression(ProductCode.Pattern)]
-        public required string ProdCode { get; set; }
+        public required ProductCode ProdCode { get; set; }
 
         [Required]
         [Range(1, 1000)]

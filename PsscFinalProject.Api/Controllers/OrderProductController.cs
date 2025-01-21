@@ -47,7 +47,7 @@ namespace PsscFinalProject.Api.Controllers
             this.orderRepository = orderRepository;
             this.publishDeliveryWorkflow = publishDeliveryWorkflow;
             this.productRepository = productRepository;
-            this.addressRepository = addressRepository; // Assign the injected address repository
+            this.addressRepository = addressRepository; 
         }
 
         [HttpGet("getAllOrders")]
@@ -176,12 +176,12 @@ namespace PsscFinalProject.Api.Controllers
                         }
 
                         var unvalidatedDelivery = new UnvalidatedOrderDelivery(new List<UnvalidatedDelivery>
-                {
-                    new UnvalidatedDelivery(
-                        TrackingNumber.Generate().Value,
-                        "Sameday" // Example courier, this can be dynamic or user-provided
-                    )
-                }.AsReadOnly());
+                        {
+                            new UnvalidatedDelivery(
+                                TrackingNumber.Generate().Value,
+                                "Sameday" // Example courier, this can be dynamic or user-provided
+                            )
+                        }.AsReadOnly());
 
                         // Trigger the delivery workflow
                         var deliveryResult = await publishDeliveryWorkflow.ExecuteAsync(unvalidatedDelivery, new PaidOrderProducts(
